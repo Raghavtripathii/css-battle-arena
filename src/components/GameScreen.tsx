@@ -1,26 +1,94 @@
-// components/GameScreen.tsx
-// main game screen — editor on the left, target + user previews on the right
-// pixel comparison runs 300ms after the user stops typing
-
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
-import { defaultKeymap, indentWithTab } from '@codemirror/commands'
+import { defaultKeymap, indentWithTab, historyKeymap, history } from '@codemirror/commands'
 import { css } from '@codemirror/lang-css'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { motion } from 'framer-motion'
 
 import type { GameState, GameAction, Level } from '../types'
-import { buildIframeDocument, compareCanvases, SCORE_DEBOUNCE_MS } from '../hooks/usePixelScore'
 import { LEVELS } from '../data/levels'
 
-// both iframes render at this size so pixel counts always match
-const PREVIEW_W = 400
-const PREVIEW_H = 300
+const PREVIEW_W  = 400
+const PREVIEW_H  = 300
+const SCORE_DELAY = 600
 
-interface Props {
-  state:    GameState
-  dispatch: React.Dispatch<GameAction>
+function buildDoc(html: string, userCSS: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: ${PREVIEW_W}px; height: ${PREVIEW_H}px; overflow: hidden; }
+  ${userCSS}
+</style>
+</head>
+<body>${html}</body>
+</html>`
+}
+
+async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
+  const doc = iframe.contentDocument
+  if (!doc) return null
+
+  const canvas  = document.createElement('canvas')
+  canvas.width  = PREVIEW_W
+  canvas.height = PREVIEW_H
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+
+  return new Promise(resolve => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PREVIEW_W}" height="${PREVIEW_H}">
+      <foreignObject width="100%" height="100%">
+        <div xmlns="http://www.w3.org/1999/xhtml"
+             style="width:${PREVIEW_W}px;height:${PREVIEW_H}px;overflow:hidden;">
+          ${doc.documentElement.outerHTML}
+        </div>
+      </foreignObject>
+    </svg>`
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const img  = new Image()
+
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+
+      // if canvas is completely blank the render failed — return null
+      // so we don't report a false 100% match on two empty canvases
+      const data = ctx.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
+      let sum = 0
+      for (let i = 0; i < data.length; i += 4) sum += data[i] + data[i+1] + data[i+2]
+      resolve(sum === 0 ? null : canvas)
+    }
+
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+    img.src = url
+  })
+}
+
+function compareCanvases(a: HTMLCanvasElement, b: HTMLCanvasElement): number {
+  const ac = a.getContext('2d')
+  const bc = b.getContext('2d')
+  if (!ac || !bc) return 0
+
+  const ad = ac.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
+  const bd = bc.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
+
+  const total = PREVIEW_W * PREVIEW_H
+  let matched = 0
+
+  for (let i = 0; i < ad.length; i += 4) {
+    if (
+      Math.abs(ad[i]   - bd[i])   <= 10 &&
+      Math.abs(ad[i+1] - bd[i+1]) <= 10 &&
+      Math.abs(ad[i+2] - bd[i+2]) <= 10
+    ) matched++
+  }
+
+  return Math.round((matched / total) * 100)
 }
 
 function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatch<GameAction> }) {
@@ -35,416 +103,320 @@ function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatc
   const isLow = seconds <= 30
 
   return (
-    <div className={`font-mono text-xl font-bold tabular-nums ${isLow ? 'text-red-400' : 'text-gray-300'}`}>
+    <span className={`font-mono text-sm font-bold tabular-nums ${isLow ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
       {mins}:{secs.toString().padStart(2, '0')}
+    </span>
+  )
+}
+
+function ScoreBar({ score, target, hasInput }: { score: number; target: number; hasInput: boolean }) {
+  const passed = score >= target
+  const color  = passed ? '#34d399' : score >= 70 ? '#fbbf24' : '#7c6af7'
+
+  return (
+    <div className="flex-shrink-0 h-9 flex items-center px-5 border-t border-white/[0.06] bg-[#0d0d12] gap-4">
+      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
+          animate={{ width: hasInput ? `${score}%` : '0%' }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        />
+      </div>
+      <span className="font-mono text-xs font-bold w-10 text-right" style={{ color: hasInput ? color : '#374151' }}>
+        {hasInput ? `${score}%` : '—'}
+      </span>
+      <span className="text-[10px] text-gray-700">
+        pass at {target}%
+      </span>
     </div>
   )
 }
 
-function ScoreRing({ score, target }: { score: number; target: number }) {
-  const size   = 56
-  const r      = 22
-  const circ   = 2 * Math.PI * r
-  const offset = circ - (score / 100) * circ
-  const passed = score >= target
-
-  const color = passed
-    ? '#34d399'
-    : score >= 70 ? '#fbbf24' : '#f87171'
-
-  return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1c1c26" strokeWidth="4" />
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: 'stroke-dashoffset 0.3s ease, stroke 0.3s ease' }}
-        />
-      </svg>
-      <div
-        className="absolute text-xs font-bold font-mono"
-        style={{ color }}
-      >
-        {score}%
-      </div>
-    </div>
-  )
+interface Props {
+  state:    GameState
+  dispatch: React.Dispatch<GameAction>
 }
 
 export default function GameScreen({ state, dispatch }: Props) {
   const level = LEVELS.find(l => l.id === state.currentLevelId) as Level
 
-  const editorRef     = useRef<HTMLDivElement>(null)
-  const editorView    = useRef<EditorView | null>(null)
-  const targetIframe  = useRef<HTMLIFrameElement>(null)
-  const userIframe    = useRef<HTMLIFrameElement>(null)
-  const scoreTimer    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const editorRef    = useRef<HTMLDivElement>(null)
+  const editorView   = useRef<EditorView | null>(null)
+  const targetIframe = useRef<HTMLIFrameElement>(null)
+  const userIframe   = useRef<HTMLIFrameElement>(null)
+  const scoreTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestCSS    = useRef(state.userCSS)
+  const isScoring    = useRef(false)
 
   const [showHint, setShowHint]   = useState(false)
   const [diffMode, setDiffMode]   = useState(false)
+  const diffCanvas                = useRef<HTMLCanvasElement>(null)
 
-  // update user iframe whenever css changes
-  useEffect(() => {
-    if (!userIframe.current) return
-    userIframe.current.srcdoc = buildIframeDocument(level.html, state.userCSS)
-  }, [state.userCSS, level.html])
+  const hasInput = state.userCSS.trim().length >= 10
 
-  // target iframe only needs to load once
+  // target only needs to load once
   useEffect(() => {
-    if (!targetIframe.current) return
-    targetIframe.current.srcdoc = buildIframeDocument(level.html, level.targetCSS)
+    if (targetIframe.current) {
+      targetIframe.current.srcdoc = buildDoc(level.html, level.targetCSS)
+    }
   }, [level])
 
-  // debounced pixel comparison
-  const runScoreCheck = useCallback(() => {
-    if (scoreTimer.current) clearTimeout(scoreTimer.current)
-    scoreTimer.current = setTimeout(async () => {
-      const tFrame = targetIframe.current
-      const uFrame = userIframe.current
-      if (!tFrame || !uFrame) return
+  // update user preview on every css change
+  useEffect(() => {
+    if (userIframe.current) {
+      userIframe.current.srcdoc = buildDoc(level.html, state.userCSS)
+    }
+  }, [state.userCSS, level.html])
 
-      // small delay to let iframes finish rendering after srcdoc update
-      await new Promise(r => setTimeout(r, 80))
+  const runScore = useCallback(async (cssToScore: string) => {
+    if (isScoring.current) return
+    if (cssToScore.trim().length < 10) {
+      dispatch({ type: 'UPDATE_SCORE', score: 0 })
+      return
+    }
 
-      const tCanvas = document.createElement('canvas')
-      const uCanvas = document.createElement('canvas')
-      tCanvas.width  = PREVIEW_W
-      tCanvas.height = PREVIEW_H
-      uCanvas.width  = PREVIEW_W
-      uCanvas.height = PREVIEW_H
+    isScoring.current = true
+    await new Promise(r => setTimeout(r, 180))
 
-      const tCtx = tCanvas.getContext('2d')
-      const uCtx = uCanvas.getContext('2d')
-      if (!tCtx || !uCtx) return
+    const [tCanvas, uCanvas] = await Promise.all([
+      renderToCanvas(targetIframe.current!),
+      renderToCanvas(userIframe.current!),
+    ])
 
-      try {
-        const tDoc = tFrame.contentDocument
-        const uDoc = uFrame.contentDocument
-        if (!tDoc || !uDoc) return
+    isScoring.current = false
+    if (!tCanvas || !uCanvas) return
 
-        // render each iframe into a canvas via svg foreignObject
-        const renderDoc = (doc: Document, ctx: CanvasRenderingContext2D) => {
-          return new Promise<void>(resolve => {
-            const svg = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="${PREVIEW_W}" height="${PREVIEW_H}">
-                <foreignObject width="100%" height="100%">
-                  <div xmlns="http://www.w3.org/1999/xhtml"
-                    style="width:${PREVIEW_W}px;height:${PREVIEW_H}px;overflow:hidden;">
-                    ${doc.documentElement.outerHTML}
-                  </div>
-                </foreignObject>
-              </svg>`
-            const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-            const url  = URL.createObjectURL(blob)
-            const img  = new Image()
-            img.onload = () => {
-              ctx.drawImage(img, 0, 0)
-              URL.revokeObjectURL(url)
-              resolve()
-            }
-            img.onerror = () => { URL.revokeObjectURL(url); resolve() }
-            img.src = url
-          })
-        }
+    const score = compareCanvases(tCanvas, uCanvas)
+    dispatch({ type: 'UPDATE_SCORE', score })
 
-        await Promise.all([
-          renderDoc(tDoc, tCtx),
-          renderDoc(uDoc, uCtx),
-        ])
+    if (diffMode && diffCanvas.current) {
+      const tCtx = tCanvas.getContext('2d')!
+      const uCtx = uCanvas.getContext('2d')!
+      const oCtx = diffCanvas.current.getContext('2d')!
+      const td   = tCtx.getImageData(0, 0, PREVIEW_W, PREVIEW_H)
+      const ud   = uCtx.getImageData(0, 0, PREVIEW_W, PREVIEW_H)
+      const diff = oCtx.createImageData(PREVIEW_W, PREVIEW_H)
 
-        const score = compareCanvases(tCanvas, uCanvas)
-        dispatch({ type: 'UPDATE_SCORE', score })
-      } catch {
-        // scoring fails silently if iframes aren't ready yet
+      for (let i = 0; i < td.data.length; i += 4) {
+        const wrong =
+          Math.abs(td.data[i]   - ud.data[i])   > 10 ||
+          Math.abs(td.data[i+1] - ud.data[i+1]) > 10 ||
+          Math.abs(td.data[i+2] - ud.data[i+2]) > 10
+        diff.data[i]   = wrong ? 239 : 0
+        diff.data[i+1] = wrong ? 68  : 0
+        diff.data[i+2] = wrong ? 68  : 0
+        diff.data[i+3] = wrong ? 160 : 0
       }
-    }, SCORE_DEBOUNCE_MS)
-  }, [dispatch])
 
-  // set up codemirror
+      oCtx.clearRect(0, 0, PREVIEW_W, PREVIEW_H)
+      oCtx.putImageData(diff, 0, 0)
+    }
+  }, [dispatch, diffMode])
+
+  const scheduleAutoScore = useCallback((css: string) => {
+    latestCSS.current = css
+    if (scoreTimer.current) clearTimeout(scoreTimer.current)
+    scoreTimer.current = setTimeout(() => {
+      runScore(latestCSS.current)
+    }, SCORE_DELAY)
+  }, [runScore])
+
+  function handleSubmit() {
+    if (scoreTimer.current) clearTimeout(scoreTimer.current)
+    runScore(latestCSS.current || state.userCSS)
+  }
+
+  // codemirror setup — runs once on mount
   useEffect(() => {
     if (!editorRef.current || editorView.current) return
 
-    const startState = EditorState.create({
-      doc: state.userCSS,
-      extensions: [
-        lineNumbers(),
-        keymap.of([...defaultKeymap, indentWithTab]),
-        css(),
-        oneDark,
-        EditorView.updateListener.of(update => {
-          if (update.docChanged) {
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: state.userCSS,
+        extensions: [
+          history(),
+          lineNumbers(),
+          keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+          css(),
+          oneDark,
+          EditorView.updateListener.of(update => {
+            if (!update.docChanged) return
             const newCSS = update.state.doc.toString()
             dispatch({ type: 'UPDATE_CSS', css: newCSS })
-            runScoreCheck()
-          }
-        }),
-        EditorView.theme({
-          '&': {
-            height: '100%',
-            backgroundColor: '#0d0d12',
-            fontFamily: "'JetBrains Mono', monospace",
-          },
-          '.cm-content': { padding: '12px 0' },
-          '.cm-gutters': { backgroundColor: '#0d0d12', borderRight: '1px solid #1c1c26' },
-          '.cm-activeLineGutter': { backgroundColor: '#13131a' },
-          '.cm-activeLine': { backgroundColor: 'rgba(124,106,247,0.06)' },
-        }),
-      ],
-    })
-
-    editorView.current = new EditorView({
-      state: startState,
+            scheduleAutoScore(newCSS)
+          }),
+          EditorView.theme({
+            '&': {
+              height: '100%',
+              fontSize: '13px',
+              backgroundColor: '#0d0d12',
+            },
+            '.cm-content': {
+              fontFamily: "'JetBrains Mono', monospace",
+              padding: '12px 0',
+              caretColor: '#7c6af7',
+            },
+            '.cm-line': { padding: '0 4px' },
+            '.cm-gutters': {
+              backgroundColor: '#0d0d12',
+              borderRight: '1px solid rgba(255,255,255,0.06)',
+              color: '#3f3f50',
+            },
+            '.cm-activeLineGutter': { backgroundColor: 'rgba(124,106,247,0.07)' },
+            '.cm-activeLine':       { backgroundColor: 'rgba(124,106,247,0.05)' },
+            '.cm-cursor':           { borderLeftColor: '#7c6af7' },
+            '.cm-selectionBackground': { backgroundColor: 'rgba(124,106,247,0.22) !important' },
+          }),
+        ],
+      }),
       parent: editorRef.current,
     })
 
+    editorView.current = view
+    view.focus()
+
     return () => {
-      editorView.current?.destroy()
+      view.destroy()
       editorView.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ctrl+enter to manually trigger score check
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        runScoreCheck()
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [runScoreCheck])
-
-  const hintsForLevel  = level.hints ?? []
-  const currentHint    = hintsForLevel[state.hintsRevealed - 1]
-  const hasMoreHints   = state.hintsRevealed < hintsForLevel.length
+  const hints        = level.hints ?? []
+  const currentHint  = hints[state.hintsRevealed - 1]
+  const hasMoreHints = state.hintsRevealed < hints.length
 
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0f] overflow-hidden">
 
-      {/* top bar */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07] bg-[#0d0d12] flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
-          >
-            ← Levels
-          </button>
-          <div className="text-white font-semibold text-sm">{level.title}</div>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-            level.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
-            level.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
-                                            'bg-red-500/15 text-red-400'
-          }`}>
-            {level.difficulty}
-          </span>
-        </div>
+      <header className="flex items-center gap-3 px-4 h-11 border-b border-white/[0.06] bg-[#0d0d12] flex-shrink-0">
+        <button
+          onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
+          className="text-gray-600 hover:text-gray-400 text-xs transition-colors shrink-0"
+        >
+          ← Levels
+        </button>
 
-        <div className="flex items-center gap-5">
-          <ScoreRing score={state.score} target={level.pointsToWin} />
+        <div className="font-semibold text-sm text-white shrink-0">{level.title}</div>
+
+        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
+          level.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
+          level.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+                                          'bg-red-500/15 text-red-400'
+        }`}>
+          {level.difficulty}
+        </span>
+
+        <span className="text-xs text-gray-700 truncate hidden md:block flex-1">
+          {level.description}
+        </span>
+
+        <div className="flex items-center gap-3 ml-auto shrink-0">
           <Timer seconds={state.timeLeft} dispatch={dispatch} />
 
           {hasMoreHints && (
             <button
-              onClick={() => {
-                dispatch({ type: 'REVEAL_HINT' })
-                setShowHint(true)
-              }}
-              className="text-xs px-3 py-1.5 border border-purple-500/40 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-all"
+              onClick={() => { dispatch({ type: 'REVEAL_HINT' }); setShowHint(true) }}
+              className="text-[11px] px-2.5 py-1 border border-purple-500/25 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-all"
             >
-              Hint ({hintsForLevel.length - state.hintsRevealed} left)
+              hint ({hints.length - state.hintsRevealed})
             </button>
           )}
 
           <button
             onClick={() => setDiffMode(v => !v)}
-            className={`text-xs px-3 py-1.5 border rounded-lg transition-all ${
+            className={`text-[11px] px-2.5 py-1 border rounded-lg transition-all ${
               diffMode
-                ? 'border-orange-500/60 text-orange-400 bg-orange-500/10'
-                : 'border-white/10 text-gray-500 hover:text-gray-300'
+                ? 'border-orange-400/40 text-orange-400 bg-orange-500/10'
+                : 'border-white/10 text-gray-600 hover:text-gray-400'
             }`}
           >
-            {diffMode ? 'Diff ON' : 'Diff'}
+            diff
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!hasInput}
+            className="text-[11px] px-3 py-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+          >
+            Submit ↵
           </button>
         </div>
       </header>
 
-      {/* hint bar */}
       {showHint && currentHint && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
-          className="bg-purple-500/10 border-b border-purple-500/20 px-5 py-2.5 flex items-center justify-between flex-shrink-0"
+          className="flex items-center justify-between px-4 py-2 bg-purple-500/10 border-b border-purple-500/20 flex-shrink-0"
         >
-          <span className="text-purple-300 text-sm">💡 {currentHint}</span>
-          <button onClick={() => setShowHint(false)} className="text-gray-500 hover:text-gray-300 text-xs">
-            Dismiss
-          </button>
+          <span className="text-purple-300 text-xs">💡 {currentHint}</span>
+          <button onClick={() => setShowHint(false)} className="text-gray-600 hover:text-gray-400 text-xs ml-4">✕</button>
         </motion.div>
       )}
 
-      {/* level description */}
-      <div className="px-5 py-2 text-xs text-gray-500 border-b border-white/[0.05] flex-shrink-0">
-        {level.description}
-        <span className="ml-4 text-gray-600">Pass at {level.pointsToWin}% match · Ctrl+Enter to score</span>
+      <div className="flex border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
+        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest md:w-[42%]">
+          Your CSS
+        </div>
+        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]">
+          Target
+        </div>
+        <div
+          className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]"
+          style={{ color: diffMode ? '#f97316' : '#374151' }}
+        >
+          {diffMode ? 'Yours (diff on)' : 'Yours'}
+        </div>
       </div>
 
-      {/* 3-column layout */}
-      <div className="flex flex-1 min-h-0">
+      {/* 3 columns — stacked on mobile, side by side on desktop */}
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
 
         {/* col 1 — editor */}
-        <div className="flex flex-col border-r border-white/[0.07]" style={{ width: '38%' }}>
-          <div className="px-4 py-2 text-[11px] font-semibold text-gray-600 uppercase tracking-widest border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
-            Your CSS
-          </div>
-          <div ref={editorRef} className="flex-1 overflow-hidden" />
+        <div className="border-r border-white/[0.06] md:w-[42%] h-1/3 md:h-auto">
+          <div ref={editorRef} className="h-full overflow-hidden" />
         </div>
 
         {/* col 2 — target */}
-        <div className="flex flex-col border-r border-white/[0.07]" style={{ width: '31%' }}>
-          <div className="px-4 py-2 text-[11px] font-semibold text-gray-600 uppercase tracking-widest border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
-            Target
-          </div>
-          <div className="flex-1 bg-[#111118] flex items-center justify-center overflow-hidden">
-            <div style={{ width: PREVIEW_W, height: PREVIEW_H, transform: 'scale(0.7)', transformOrigin: 'center' }}>
-              <iframe
-                ref={targetIframe}
-                title="Target preview"
-                sandbox="allow-same-origin"
-                scrolling="no"
-                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block' }}
-              />
-            </div>
+        <div className="border-r border-white/[0.06] md:w-[29%] h-1/3 md:h-auto bg-[#0d0d12] flex items-center justify-center">
+          <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
+            <iframe
+              ref={targetIframe}
+              title="Target"
+              sandbox="allow-same-origin"
+              scrolling="no"
+              style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
+            />
           </div>
         </div>
 
-        {/* col 3 — yours, with optional diff overlay */}
-        <div className="flex flex-col" style={{ width: '31%' }}>
-          <div className="px-4 py-2 text-[11px] font-semibold text-gray-600 uppercase tracking-widest border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
-            Yours {diffMode && <span className="text-orange-400 ml-1">· diff mode</span>}
-          </div>
-          <div className="flex-1 bg-[#111118] flex items-center justify-center overflow-hidden relative">
-            <div style={{ width: PREVIEW_W, height: PREVIEW_H, transform: 'scale(0.7)', transformOrigin: 'center', position: 'relative' }}>
-              <iframe
-                ref={userIframe}
-                title="Your preview"
-                sandbox="allow-same-origin"
-                scrolling="no"
-                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block' }}
+        {/* col 3 — yours */}
+        <div className="md:w-[29%] h-1/3 md:h-auto bg-[#0d0d12] flex items-center justify-center">
+          <div className="relative" style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
+            <iframe
+              ref={userIframe}
+              title="Yours"
+              sandbox="allow-same-origin"
+              scrolling="no"
+              style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
+            />
+            {diffMode && (
+              <canvas
+                ref={diffCanvas}
+                width={PREVIEW_W}
+                height={PREVIEW_H}
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
               />
-              {diffMode && (
-                <DiffOverlay
-                  targetIframe={targetIframe}
-                  userIframe={userIframe}
-                  width={PREVIEW_W}
-                  height={PREVIEW_H}
-                  userCSS={state.userCSS}
-                />
-              )}
-            </div>
+            )}
           </div>
         </div>
+
       </div>
+
+      <ScoreBar score={state.score} target={level.pointsToWin} hasInput={hasInput} />
+
     </div>
-  )
-}
-
-interface DiffProps {
-  targetIframe: React.RefObject<HTMLIFrameElement | null>
-  userIframe:   React.RefObject<HTMLIFrameElement | null>
-  width:        number
-  height:       number
-  userCSS:      string
-}
-
-// red overlay on pixels that don't match — re-runs whenever css changes
-function DiffOverlay({ targetIframe, userIframe, width, height, userCSS }: DiffProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const timer = setTimeout(async () => {
-      const tFrame = targetIframe.current
-      const uFrame = userIframe.current
-      if (!tFrame?.contentDocument || !uFrame?.contentDocument) return
-
-      const render = (doc: Document) => new Promise<ImageData | null>(resolve => {
-        const tmpCanvas = document.createElement('canvas')
-        tmpCanvas.width  = width
-        tmpCanvas.height = height
-        const tmpCtx = tmpCanvas.getContext('2d')
-        if (!tmpCtx) { resolve(null); return }
-
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-          <foreignObject width="100%" height="100%">
-            <div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden;">
-              ${doc.documentElement.outerHTML}
-            </div>
-          </foreignObject>
-        </svg>`
-        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-        const url  = URL.createObjectURL(blob)
-        const img  = new Image()
-        img.onload = () => {
-          tmpCtx.drawImage(img, 0, 0)
-          URL.revokeObjectURL(url)
-          resolve(tmpCtx.getImageData(0, 0, width, height))
-        }
-        img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
-        img.src = url
-      })
-
-      const [tData, uData] = await Promise.all([
-        render(tFrame.contentDocument),
-        render(uFrame.contentDocument),
-      ])
-
-      if (!tData || !uData) return
-
-      // red where pixels differ, transparent where they match
-      const diffData = ctx.createImageData(width, height)
-      for (let i = 0; i < tData.data.length; i += 4) {
-        const rDiff = Math.abs(tData.data[i]     - uData.data[i])
-        const gDiff = Math.abs(tData.data[i + 1] - uData.data[i + 1])
-        const bDiff = Math.abs(tData.data[i + 2] - uData.data[i + 2])
-        const wrong = rDiff > 10 || gDiff > 10 || bDiff > 10
-
-        diffData.data[i]     = wrong ? 239 : 0
-        diffData.data[i + 1] = wrong ? 68  : 0
-        diffData.data[i + 2] = wrong ? 68  : 0
-        diffData.data[i + 3] = wrong ? 140 : 0
-      }
-
-      ctx.clearRect(0, 0, width, height)
-      ctx.putImageData(diffData, 0, 0)
-    }, 400)
-
-    return () => clearTimeout(timer)
-  }, [userCSS, targetIframe, userIframe, width, height])
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      style={{
-        position: 'absolute',
-        top: 0, left: 0,
-        width: '100%', height: '100%',
-        pointerEvents: 'none',
-      }}
-    />
   )
 }
