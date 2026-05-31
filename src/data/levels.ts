@@ -7,7 +7,7 @@ export const LEVELS: Level[] = [
     difficulty: 'easy',
     description: 'Center the red box perfectly in the middle of the screen.',
     timeLimit: 90,
-    pointsToWin: 88,
+    pointsToWin: 85,
     html: `<div class="container"><div class="box"></div></div>`,
     targetCSS: `
       .container {
@@ -37,7 +37,7 @@ export const LEVELS: Level[] = [
     difficulty: 'easy',
     description: 'Turn the square div into a perfect circle with a gradient.',
     timeLimit: 90,
-    pointsToWin: 88,
+    pointsToWin: 83,
     html: `<div class="container"><div class="circle"></div></div>`,
     targetCSS: `
       .container {
@@ -57,7 +57,7 @@ export const LEVELS: Level[] = [
     `,
     hints: [
       'border-radius: 50% makes any square into a circle.',
-      'Use linear-gradient for the background, not a solid color.',
+      'Use linear-gradient for the background.',
       'The gradient goes from #667eea to #764ba2 at 135 degrees.',
     ],
   },
@@ -67,7 +67,7 @@ export const LEVELS: Level[] = [
     difficulty: 'easy',
     description: 'Create three equal-width columns side by side.',
     timeLimit: 120,
-    pointsToWin: 85,
+    pointsToWin: 83,
     html: `<div class="container"><div class="col"></div><div class="col"></div><div class="col"></div></div>`,
     targetCSS: `
       .container {
@@ -96,7 +96,7 @@ export const LEVELS: Level[] = [
     difficulty: 'easy',
     description: 'Build a white card with a soft shadow on a grey background.',
     timeLimit: 120,
-    pointsToWin: 85,
+    pointsToWin: 80,
     html: `<div class="container"><div class="card"><div class="title"></div><div class="line"></div><div class="line short"></div></div></div>`,
     targetCSS: `
       .container {
@@ -126,9 +126,7 @@ export const LEVELS: Level[] = [
         border-radius: 3px;
         margin-bottom: 8px;
       }
-      .line.short {
-        width: 60%;
-      }
+      .line.short { width: 60%; }
     `,
     hints: [
       'The outer container has a light grey background (#f0f2f5).',
@@ -142,7 +140,7 @@ export const LEVELS: Level[] = [
     difficulty: 'medium',
     description: 'Recreate the French flag — three equal vertical stripes.',
     timeLimit: 150,
-    pointsToWin: 90,
+    pointsToWin: 85,
     html: `<div class="container"><div class="flag"><div class="stripe"></div><div class="stripe"></div><div class="stripe"></div></div></div>`,
     targetCSS: `
       .container {
@@ -161,10 +159,7 @@ export const LEVELS: Level[] = [
         overflow: hidden;
         box-shadow: 0 2px 16px rgba(0,0,0,0.4);
       }
-      .stripe {
-        flex: 1;
-        height: 100%;
-      }
+      .stripe { flex: 1; height: 100%; }
       .stripe:nth-child(1) { background: #002395; }
       .stripe:nth-child(2) { background: #ffffff; }
       .stripe:nth-child(3) { background: #ed2939; }
@@ -181,7 +176,7 @@ export const LEVELS: Level[] = [
     difficulty: 'medium',
     description: 'Build an animated circular loading spinner.',
     timeLimit: 150,
-    pointsToWin: 85,
+    pointsToWin: 75,
     html: `<div class="container"><div class="spinner"></div></div>`,
     targetCSS: `
       .container {
@@ -214,9 +209,9 @@ export const LEVELS: Level[] = [
     id: 7,
     title: 'CSS Grid Layout',
     difficulty: 'medium',
-    description: 'Build a 2x2 grid of coloured boxes with a gap.',
+    description: 'Build a 2×2 grid of coloured boxes with a gap.',
     timeLimit: 150,
-    pointsToWin: 88,
+    pointsToWin: 83,
     html: `<div class="container"><div class="grid"><div class="cell a"></div><div class="cell b"></div><div class="cell c"></div><div class="cell d"></div></div></div>`,
     targetCSS: `
       .container {
@@ -251,9 +246,9 @@ export const LEVELS: Level[] = [
     id: 8,
     title: 'Neon Button',
     difficulty: 'hard',
-    description: 'Create a glowing neon button with a hover effect.',
+    description: 'Create a glowing neon button.',
     timeLimit: 180,
-    pointsToWin: 82,
+    pointsToWin: 75,
     html: `<div class="container"><button class="btn">Click Me</button></div>`,
     targetCSS: `
       .container {
@@ -276,27 +271,21 @@ export const LEVELS: Level[] = [
         letter-spacing: 0.05em;
         text-transform: uppercase;
         box-shadow: 0 0 20px rgba(124,106,247,0.4), inset 0 0 20px rgba(124,106,247,0.05);
-        transition: all 0.3s ease;
-      }
-      .btn:hover {
-        background: #7c6af7;
-        color: white;
-        box-shadow: 0 0 40px rgba(124,106,247,0.8);
       }
     `,
     hints: [
       'The button has a transparent background with a colored border.',
       'box-shadow creates the glow — use rgba with low opacity.',
-      'The hover state changes background to solid and intensifies the glow.',
+      'The text uses letter-spacing and text-transform: uppercase.',
     ],
   },
   {
     id: 9,
     title: 'Split Hero',
     difficulty: 'hard',
-    description: 'Build a two-tone hero section — dark left, light right with a diagonal cut.',
+    description: 'Two-tone hero section with a diagonal cut between panels.',
     timeLimit: 180,
-    pointsToWin: 82,
+    pointsToWin: 70,
     html: `<div class="hero"><div class="left"><div class="headline"></div><div class="sub"></div></div><div class="right"></div></div>`,
     targetCSS: `
       .hero {
@@ -335,7 +324,7 @@ export const LEVELS: Level[] = [
     `,
     hints: [
       'The left panel uses clip-path: polygon to create the diagonal cut.',
-      'The right panel overlaps slightly using negative margin-left.',
+      'The right panel overlaps slightly using a negative margin-left.',
       'The right panel uses a linear-gradient background.',
     ],
   },
@@ -343,9 +332,9 @@ export const LEVELS: Level[] = [
     id: 10,
     title: 'Glassmorphism Card',
     difficulty: 'hard',
-    description: 'Create a frosted glass card over a gradient background.',
+    description: 'A frosted glass card over a gradient background.',
     timeLimit: 200,
-    pointsToWin: 80,
+    pointsToWin: 70,
     html: `<div class="container"><div class="glass"><div class="avatar"></div><div class="name"></div><div class="role"></div></div></div>`,
     targetCSS: `
       .container {
@@ -390,9 +379,9 @@ export const LEVELS: Level[] = [
       }
     `,
     hints: [
-      'The glass effect uses background: rgba(255,255,255,0.15) — semi-transparent white.',
-      'backdrop-filter: blur(12px) creates the frosted glass effect.',
-      'The border is rgba(255,255,255,0.3) — a semi-transparent white line.',
+      'The glass effect uses background: rgba(255,255,255,0.15).',
+      'backdrop-filter: blur(12px) creates the frosted look.',
+      'The border is rgba(255,255,255,0.3) — semi-transparent white.',
     ],
   },
 ]
