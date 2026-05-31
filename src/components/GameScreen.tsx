@@ -1,3 +1,5 @@
+// components/GameScreen.tsx
+
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
@@ -226,6 +228,20 @@ export default function GameScreen({ state, dispatch }: Props) {
     if (scoreTimer.current) clearTimeout(scoreTimer.current)
     runScore(latestCSS.current || state.userCSS)
   }
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        handleSubmit()
+      }
+      if (e.key === 'Escape') {
+        dispatch({ type: 'GO_LEVEL_SELECT' })
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleSubmit, dispatch])
 
   // codemirror setup — runs once on mount
   useEffect(() => {
