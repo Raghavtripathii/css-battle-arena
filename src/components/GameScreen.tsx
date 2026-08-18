@@ -116,8 +116,8 @@ function ScoreBar({ score, target, hasInput }: { score: number; target: number; 
   const color  = passed ? '#34d399' : score >= 70 ? '#fbbf24' : '#7c6af7'
 
   return (
-    <div className="flex-shrink-0 h-9 flex items-center px-5 border-t border-white/[0.06] bg-[#0d0d12] gap-4">
-      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+    <div className="flex-shrink-0 h-10 flex items-center px-5 border-t border-white/[0.06] bg-[#0d0d12] gap-4">
+      <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
         <motion.div
           className="h-full rounded-full"
           style={{ backgroundColor: color }}
@@ -125,10 +125,10 @@ function ScoreBar({ score, target, hasInput }: { score: number; target: number; 
           transition={{ duration: 0.4, ease: 'easeOut' }}
         />
       </div>
-      <span className="font-mono text-xs font-bold w-10 text-right" style={{ color: hasInput ? color : '#374151' }}>
+      <span className="font-mono text-xs font-bold w-11 text-right tabular-nums" style={{ color: hasInput ? color : '#374151' }}>
         {hasInput ? `${score}%` : '—'}
       </span>
-      <span className="text-[10px] text-gray-700">
+      <span className="text-[10px] text-gray-700 shrink-0">
         pass at {target}%
       </span>
     </div>
@@ -306,43 +306,48 @@ export default function GameScreen({ state, dispatch }: Props) {
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0f] overflow-hidden">
 
-      <header className="flex items-center gap-3 px-4 h-11 border-b border-white/[0.06] bg-[#0d0d12] flex-shrink-0">
+      <header className="flex items-center gap-4 px-5 h-14 border-b border-white/[0.06] bg-[#0d0d12] flex-shrink-0">
         <button
           onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-          className="text-gray-600 hover:text-gray-400 text-xs transition-colors shrink-0"
+          className="text-gray-600 hover:text-gray-300 text-xs font-medium transition-colors shrink-0 px-2 py-1 rounded-md hover:bg-white/[0.05]"
         >
           ← Levels
         </button>
 
-        <div className="font-semibold text-sm text-white shrink-0">{level.title}</div>
+        <div className="w-px h-5 bg-white/[0.08] shrink-0" />
 
-        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
-          level.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
-          level.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
-                                          'bg-red-500/15 text-red-400'
-        }`}>
-          {level.difficulty}
-        </span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="font-semibold text-sm text-white">{level.title}</span>
+          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+            level.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
+            level.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+                                            'bg-red-500/15 text-red-400'
+          }`}>
+            {level.difficulty}
+          </span>
+        </div>
 
         <span className="text-xs text-gray-700 truncate hidden md:block flex-1">
           {level.description}
         </span>
 
-        <div className="flex items-center gap-3 ml-auto shrink-0">
-          <Timer seconds={state.timeLeft} dispatch={dispatch} />
+        <div className="flex items-center gap-2.5 ml-auto shrink-0">
+          <div className="px-2.5 py-1 rounded-lg bg-white/[0.04]">
+            <Timer seconds={state.timeLeft} dispatch={dispatch} />
+          </div>
 
           {hasMoreHints && (
             <button
               onClick={() => { dispatch({ type: 'REVEAL_HINT' }); setShowHint(true) }}
-              className="text-[11px] px-2.5 py-1 border border-purple-500/25 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-all"
+              className="text-[11px] font-medium px-3 py-1.5 border border-purple-500/25 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-all"
             >
-              hint ({hints.length - state.hintsRevealed})
+              💡 hint ({hints.length - state.hintsRevealed})
             </button>
           )}
 
           <button
             onClick={() => setDiffMode(v => !v)}
-            className={`text-[11px] px-2.5 py-1 border rounded-lg transition-all ${
+            className={`text-[11px] font-medium px-3 py-1.5 border rounded-lg transition-all ${
               diffMode
                 ? 'border-orange-400/40 text-orange-400 bg-orange-500/10'
                 : 'border-white/10 text-gray-600 hover:text-gray-400'
@@ -354,7 +359,7 @@ export default function GameScreen({ state, dispatch }: Props) {
           <button
             onClick={handleSubmit}
             disabled={!hasInput}
-            className="text-[11px] px-3 py-1 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+            className="text-[11px] font-semibold px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
             Submit ↵
           </button>
