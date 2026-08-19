@@ -151,10 +151,6 @@ export default function GameScreen({ state, dispatch }: Props) {
   const latestCSS    = useRef(state.userCSS)
   const isScoring    = useRef(false)
 
-  const [showHint, setShowHint]   = useState(false)
-  const [diffMode, setDiffMode]   = useState(false)
-  const diffCanvas                = useRef<HTMLCanvasElement>(null)
-
   const hasInput = state.userCSS.trim().length >= 10
 
   // target only needs to load once
@@ -191,30 +187,7 @@ export default function GameScreen({ state, dispatch }: Props) {
 
     const score = compareCanvases(tCanvas, uCanvas)
     dispatch({ type: 'UPDATE_SCORE', score })
-
-    if (diffMode && diffCanvas.current) {
-      const tCtx = tCanvas.getContext('2d')!
-      const uCtx = uCanvas.getContext('2d')!
-      const oCtx = diffCanvas.current.getContext('2d')!
-      const td   = tCtx.getImageData(0, 0, PREVIEW_W, PREVIEW_H)
-      const ud   = uCtx.getImageData(0, 0, PREVIEW_W, PREVIEW_H)
-      const diff = oCtx.createImageData(PREVIEW_W, PREVIEW_H)
-
-      for (let i = 0; i < td.data.length; i += 4) {
-        const wrong =
-          Math.abs(td.data[i]   - ud.data[i])   > 10 ||
-          Math.abs(td.data[i+1] - ud.data[i+1]) > 10 ||
-          Math.abs(td.data[i+2] - ud.data[i+2]) > 10
-        diff.data[i]   = wrong ? 239 : 0
-        diff.data[i+1] = wrong ? 68  : 0
-        diff.data[i+2] = wrong ? 68  : 0
-        diff.data[i+3] = wrong ? 160 : 0
-      }
-
-      oCtx.clearRect(0, 0, PREVIEW_W, PREVIEW_H)
-      oCtx.putImageData(diff, 0, 0)
-    }
-  }, [dispatch, diffMode])
+  }, [dispatch])
 
   const scheduleAutoScore = useCallback((css: string) => {
     latestCSS.current = css
@@ -299,10 +272,6 @@ export default function GameScreen({ state, dispatch }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const hints        = level.hints ?? []
-  const currentHint  = hints[state.hintsRevealed - 1]
-  const hasMoreHints = state.hintsRevealed < hints.length
-
   return (
     <div className="flex flex-col h-screen bg-[#0a0a0f] overflow-hidden">
 
@@ -336,26 +305,6 @@ export default function GameScreen({ state, dispatch }: Props) {
             <Timer seconds={state.timeLeft} dispatch={dispatch} />
           </div>
 
-          {hasMoreHints && (
-            <button
-              onClick={() => { dispatch({ type: 'REVEAL_HINT' }); setShowHint(true) }}
-              className="text-[11px] font-medium px-3 py-1.5 border border-purple-500/25 text-purple-400 rounded-lg hover:bg-purple-500/10 transition-all"
-            >
-              💡 hint ({hints.length - state.hintsRevealed})
-            </button>
-          )}
-
-          <button
-            onClick={() => setDiffMode(v => !v)}
-            className={`text-[11px] font-medium px-3 py-1.5 border rounded-lg transition-all ${
-              diffMode
-                ? 'border-orange-400/40 text-orange-400 bg-orange-500/10'
-                : 'border-white/10 text-gray-600 hover:text-gray-400'
-            }`}
-          >
-            diff
-          </button>
-
           <button
             onClick={handleSubmit}
             disabled={!hasInput}
@@ -366,17 +315,6 @@ export default function GameScreen({ state, dispatch }: Props) {
         </div>
       </header>
 
-      {showHint && currentHint && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          className="flex items-center justify-between px-4 py-2 bg-purple-500/10 border-b border-purple-500/20 flex-shrink-0"
-        >
-          <span className="text-purple-300 text-xs">💡 {currentHint}</span>
-          <button onClick={() => setShowHint(false)} className="text-gray-600 hover:text-gray-400 text-xs ml-4">✕</button>
-        </motion.div>
-      )}
-
       <div className="flex border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
         <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest md:w-[42%]">
           Your CSS
@@ -384,11 +322,8 @@ export default function GameScreen({ state, dispatch }: Props) {
         <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]">
           Target
         </div>
-        <div
-          className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]"
-          style={{ color: diffMode ? '#f97316' : '#374151' }}
-        >
-          {diffMode ? 'Yours (diff on)' : 'Yours'}
+        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]">
+          Yours
         </div>
       </div>
 
@@ -423,14 +358,6 @@ export default function GameScreen({ state, dispatch }: Props) {
               scrolling="no"
               style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
             />
-            {diffMode && (
-              <canvas
-                ref={diffCanvas}
-                width={PREVIEW_W}
-                height={PREVIEW_H}
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
-              />
-            )}
           </div>
         </div>
 
