@@ -197,9 +197,30 @@ export default function GameScreen({ state, dispatch }: Props) {
     }, SCORE_DELAY)
   }, [runScore])
 
-  function handleSubmit() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleSubmit() {
+    if (isSubmitting) return
     if (scoreTimer.current) clearTimeout(scoreTimer.current)
-    runScore(latestCSS.current || state.userCSS)
+
+    const cssToScore = latestCSS.current || state.userCSS
+    if (cssToScore.trim().length < 10) return
+
+    setIsSubmitting(true)
+
+    // wait a tick for the iframe to reflect the very latest keystroke, then capture both frames
+    await new Promise(r => setTimeout(r, 180))
+
+    const [tCanvas, uCanvas] = await Promise.all([
+      renderToCanvas(targetIframe.current!),
+      renderToCanvas(userIframe.current!),
+    ])
+
+    setIsSubmitting(false)
+
+    // if either preview failed to render, still surface a result instead of doing nothing
+    const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas) : 0
+    dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
   }
 
   useEffect(() => {
@@ -307,10 +328,10 @@ export default function GameScreen({ state, dispatch }: Props) {
 
           <button
             onClick={handleSubmit}
-            disabled={!hasInput}
+            disabled={!hasInput || isSubmitting}
             className="text-[11px] font-semibold px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
           >
-            Submit ↵
+            {isSubmitting ? 'Scoring…' : 'Submit ↵'}
           </button>
         </div>
       </header>
