@@ -116,8 +116,10 @@ export default function App() {
           {state.screen === 'failed' && (
             <motion.div key="failed" {...fade} className="min-h-screen flex items-center justify-center px-6 py-14">
               <div className="text-center max-w-md w-full">
-                <div className="text-6xl mb-6">⏰</div>
-                <h2 className="text-3xl font-extrabold tracking-tight mb-3">Time's Up</h2>
+                <div className="text-6xl mb-6">{state.timeLeft <= 0 ? '⏰' : '📉'}</div>
+                <h2 className="text-3xl font-extrabold tracking-tight mb-3">
+                  {state.timeLeft <= 0 ? "Time's Up" : 'Not Quite There'}
+                </h2>
                 <p className="text-gray-400 mb-3">You reached</p>
                 <div className="text-6xl font-black text-rose-400 mb-12 tabular-nums">{state.score}%</div>
                 <div className="flex gap-4 justify-center">
