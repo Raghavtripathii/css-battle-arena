@@ -75,6 +75,29 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, score: action.score }
     }
 
+    case 'SUBMIT_RESULT': {
+      const level = LEVELS.find(l => l.id === state.currentLevelId)
+      if (!level) return { ...state, score: action.score }
+
+      const passed = action.score >= level.pointsToWin
+
+      if (passed) {
+        const key = `personal_best_${state.currentLevelId}`
+        const existing = parseInt(localStorage.getItem(key) ?? '0', 10)
+        if (action.score > existing) {
+          localStorage.setItem(key, String(action.score))
+        }
+        localStorage.setItem(`completed_${state.currentLevelId}`, 'true')
+      }
+
+      return {
+        ...state,
+        score:          action.score,
+        screen:         passed ? 'complete' : 'failed',
+        isTimerRunning: false,
+      }
+    }
+
     case 'TICK': {
       if (!state.isTimerRunning) return state
       if (state.timeLeft <= 1) {
