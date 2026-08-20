@@ -43,6 +43,7 @@ export type GameAction =
   | { type: 'START_LEVEL';    levelId: number }
   | { type: 'UPDATE_CSS';     css: string }
   | { type: 'UPDATE_SCORE';   score: number }
+  | { type: 'SUBMIT_RESULT';  score: number }
   | { type: 'TICK' }
   | { type: 'REVEAL_HINT' }
   | { type: 'COMPLETE_LEVEL'; finalScore: number }
