@@ -384,4 +384,223 @@ export const LEVELS: Level[] = [
       'The border is rgba(255,255,255,0.3) — semi-transparent white.',
     ],
   },
+  {
+    id: 11,
+    title: 'Progress Bar',
+    difficulty: 'easy',
+    description: 'Build a rounded progress bar filled to 65%.',
+    timeLimit: 100,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="track"><div class="fill"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .track {
+        width: 240px;
+        height: 16px;
+        background: #262636;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .fill {
+        width: 65%;
+        height: 100%;
+        background: linear-gradient(90deg, #7c6af7, #a78bfa);
+        border-radius: 999px;
+      }
+    `,
+    hints: [
+      'The outer track uses border-radius: 999px for a full pill shape.',
+      'overflow: hidden on the track clips the inner fill to the same rounded shape.',
+      'The fill is 65% width with its own gradient background.',
+    ],
+  },
+  {
+    id: 12,
+    title: 'Speech Bubble',
+    difficulty: 'medium',
+    description: 'A chat bubble with a small triangular tail.',
+    timeLimit: 150,
+    pointsToWin: 78,
+    html: `<div class="container"><div class="bubble">Hello!</div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #f5f6fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bubble {
+        position: relative;
+        background: #7c6af7;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 14px 22px;
+        border-radius: 16px;
+      }
+      .bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 28px;
+        border-width: 10px 10px 0 0;
+        border-style: solid;
+        border-color: #7c6af7 transparent transparent transparent;
+      }
+    `,
+    hints: [
+      'The tail is a ::after pseudo-element, not a separate div.',
+      'A CSS triangle is made from a box with zero width/height and solid borders on only some sides.',
+      'position: relative on .bubble lets the tail be positioned absolutely against it.',
+    ],
+  },
+  {
+    id: 13,
+    title: 'Toggle Switch',
+    difficulty: 'medium',
+    description: 'An iOS-style toggle switch in the "on" position.',
+    timeLimit: 150,
+    pointsToWin: 82,
+    html: `<div class="container"><div class="switch"><div class="knob"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .switch {
+        width: 64px;
+        height: 34px;
+        background: #34d399;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        padding: 3px;
+        justify-content: flex-end;
+      }
+      .knob {
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      }
+    `,
+    hints: [
+      'The track is a flex container with padding acting as the inner margin.',
+      'justify-content: flex-end pushes the knob to the right side (the "on" state).',
+      'The knob is a plain circle — border-radius: 50% on a square.',
+    ],
+  },
+  {
+    id: 14,
+    title: 'Pricing Card',
+    difficulty: 'hard',
+    description: 'A pricing card with a gradient border and highlighted price.',
+    timeLimit: 200,
+    pointsToWin: 72,
+    html: `<div class="container"><div class="card"><div class="badge">Popular</div><div class="price">$29<span>/mo</span></div><div class="line"></div><div class="line"></div><div class="line short"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .card {
+        width: 220px;
+        background: #17172a;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        padding: 24px;
+        background-image: linear-gradient(#17172a, #17172a), linear-gradient(135deg, #7c6af7, #f472b6);
+        background-origin: border-box;
+        background-clip: padding-box, border-box;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #f472b6;
+        background: rgba(244,114,182,0.12);
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-bottom: 16px;
+      }
+      .price {
+        font-size: 32px;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 20px;
+      }
+      .price span {
+        font-size: 14px;
+        font-weight: 500;
+        color: #8888a0;
+      }
+      .line {
+        height: 8px;
+        background: #2a2a40;
+        border-radius: 3px;
+        margin-bottom: 10px;
+      }
+      .line.short { width: 60%; }
+    `,
+    hints: [
+      'A gradient border on a rounded box uses two background-image layers with background-clip.',
+      'The badge is a small pill using rgba background so the text color shows through faintly.',
+      'The price uses a nested <span> styled smaller and dimmer for the "/mo" part.',
+    ],
+  },
+  {
+    id: 15,
+    title: 'Checkerboard',
+    difficulty: 'hard',
+    description: 'A checkerboard pattern made without any extra HTML elements.',
+    timeLimit: 180,
+    pointsToWin: 78,
+    html: `<div class="container"><div class="board"></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .board {
+        width: 240px;
+        height: 240px;
+        background-color: #1a1a2e;
+        background-image:
+          linear-gradient(45deg, #7c6af7 25%, transparent 25%, transparent 75%, #7c6af7 75%),
+          linear-gradient(45deg, #7c6af7 25%, transparent 25%, transparent 75%, #7c6af7 75%);
+        background-size: 40px 40px;
+        background-position: 0 0, 20px 20px;
+        border-radius: 8px;
+      }
+    `,
+    hints: [
+      'The entire pattern is built with two overlapping linear-gradient backgrounds — no extra divs.',
+      'background-size sets the size of one repeating tile.',
+      'background-position offsets the second gradient layer by half a tile to create the checker offset.',
+    ],
+  },
 ]
