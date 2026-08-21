@@ -1,4 +1,3 @@
-
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGameReducer } from './hooks/useGameReducer'
 import GameScreen from './components/GameScreen'
@@ -76,7 +75,7 @@ export default function App() {
                 <div className="flex items-center justify-between mb-10">
                   <div>
                     <h2 className="text-3xl font-extrabold tracking-tight mb-1.5">Choose a Level</h2>
-                    <p className="text-gray-500 text-sm">10 challenges · easy to hard</p>
+                    <p className="text-gray-500 text-sm">{LEVELS.length} challenges · easy to hard</p>
                   </div>
                   <button onClick={() => dispatch({ type: 'GO_HOME' })}
                     className="text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors px-4 py-2 rounded-lg hover:bg-white/[0.04]">
