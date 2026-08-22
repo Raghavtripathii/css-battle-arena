@@ -11,6 +11,8 @@ import { motion } from 'framer-motion'
 import type { GameState, GameAction, Level } from '../types'
 import { LEVELS } from '../data/levels'
 
+import html2canvas from 'html2canvas'
+
 const PREVIEW_W  = 400
 const PREVIEW_H  = 300
 const SCORE_DELAY = 600
@@ -30,45 +32,44 @@ function buildDoc(html: string, userCSS: string): string {
 </html>`
 }
 
+// Renders an iframe's live DOM to a canvas.
+//
+// Previously this used an SVG <foreignObject> + <Image> + canvas trick.
+// That approach reliably produced a "tainted" canvas in Chrome — even for
+// fully local, same-origin content — because Chrome's SVG image decoder
+// treats any foreignObject subtree as opaque/unsafe pixel data. The result
+// was getImageData() throwing a SecurityError on *every* capture, which the
+// code silently swallowed and reported as a 0% score regardless of how
+// correct the CSS actually was.
+//
+// html2canvas avoids this entirely: it walks the real DOM and paints each
+// element directly onto the canvas using its computed styles, so there's no
+// image-decode step for the browser to taint.
 async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
   const doc = iframe.contentDocument
-  if (!doc) return null
+  if (!doc || !doc.body) return null
 
-  const canvas  = document.createElement('canvas')
-  canvas.width  = PREVIEW_W
-  canvas.height = PREVIEW_H
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return null
+  try {
+    const canvas = await html2canvas(doc.body, {
+      width:  PREVIEW_W,
+      height: PREVIEW_H,
+      backgroundColor: null,
+      logging: false,
+      scale: 1,
+    })
 
-  return new Promise(resolve => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${PREVIEW_W}" height="${PREVIEW_H}">
-      <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml"
-             style="width:${PREVIEW_W}px;height:${PREVIEW_H}px;overflow:hidden;">
-          ${doc.documentElement.outerHTML}
-        </div>
-      </foreignObject>
-    </svg>`
-
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-    const url  = URL.createObjectURL(blob)
-    const img  = new Image()
-
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0)
-      URL.revokeObjectURL(url)
-
-      // if canvas is completely blank the render failed — return null
-      // so we don't report a false 100% match on two empty canvases
-      const data = ctx.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
-      let sum = 0
-      for (let i = 0; i < data.length; i += 4) sum += data[i] + data[i+1] + data[i+2]
-      resolve(sum === 0 ? null : canvas)
-    }
-
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
-    img.src = url
-  })
+    // if the canvas is completely blank the render failed — return null so
+    // we don't report a false 100% match on two empty canvases
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    let sum = 0
+    for (let i = 0; i < data.length; i += 4) sum += data[i] + data[i + 1] + data[i + 2]
+    return sum === 0 ? null : canvas
+  } catch {
+    // an unreadable/failed render — treat as a failed capture rather than crash
+    return null
+  }
 }
 
 function compareCanvases(a: HTMLCanvasElement, b: HTMLCanvasElement): number {
