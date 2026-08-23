@@ -603,4 +603,222 @@ export const LEVELS: Level[] = [
       'background-position offsets the second gradient layer by half a tile to create the checker offset.',
     ],
   },
+  {
+    id: 16,
+    title: 'Avatar Stack',
+    difficulty: 'medium',
+    description: 'Three overlapping circular avatars with a ring border.',
+    timeLimit: 150,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="stack"><div class="avatar a1"></div><div class="avatar a2"></div><div class="avatar a3"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .stack {
+        display: flex;
+      }
+      .avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 3px solid #0f0f18;
+        margin-left: -16px;
+      }
+      .a1 { background: #f472b6; margin-left: 0; z-index: 3; }
+      .a2 { background: #7c6af7; z-index: 2; }
+      .a3 { background: #34d399; z-index: 1; }
+    `,
+    hints: [
+      'Each avatar is a circle (border-radius: 50%) with a border matching the page background, so it looks cut out.',
+      'Negative margin-left pulls each avatar to overlap the previous one.',
+      'z-index controls the stacking order — the first avatar should sit on top.',
+    ],
+  },
+  {
+    id: 17,
+    title: 'Notification Badge',
+    difficulty: 'easy',
+    description: 'A bell icon with a small red count badge in the corner.',
+    timeLimit: 110,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="bell-wrap"><div class="bell"></div><div class="badge">3</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bell-wrap {
+        position: relative;
+        width: 60px;
+        height: 60px;
+      }
+      .bell {
+        width: 100%;
+        height: 100%;
+        background: #2a2a40;
+        border-radius: 14px;
+      }
+      .badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        background: #ef4444;
+        border: 2px solid #14141f;
+        border-radius: 999px;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    `,
+    hints: [
+      'The wrapper needs position: relative so the badge can be positioned against it.',
+      'The badge uses position: absolute with negative top/right offsets to sit on the corner.',
+      'A border matching the page background makes the badge look cleanly cut out of the icon.',
+    ],
+  },
+  {
+    id: 18,
+    title: 'Star Rating',
+    difficulty: 'easy',
+    description: 'Five stars, the first three filled gold and the rest dim.',
+    timeLimit: 120,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="stars"><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star">★</span><span class="star">★</span></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .stars {
+        display: flex;
+        gap: 6px;
+      }
+      .star {
+        font-size: 36px;
+        color: #2a2a40;
+        line-height: 1;
+      }
+      .star.filled {
+        color: #fbbf24;
+      }
+    `,
+    hints: [
+      'All five stars share the same base class — only the color changes for filled ones.',
+      'gap on the flex container spaces the stars evenly.',
+      'A single extra class (.filled) is enough to override the color for the first three.',
+    ],
+  },
+  {
+    id: 19,
+    title: 'Corner Ribbon',
+    difficulty: 'hard',
+    description: 'A "NEW" ribbon banner diagonally across the top-right corner.',
+    timeLimit: 190,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="card"><div class="ribbon">NEW</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .card {
+        position: relative;
+        width: 220px;
+        height: 160px;
+        background: #17172a;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .ribbon {
+        position: absolute;
+        top: 18px;
+        right: -34px;
+        width: 130px;
+        background: #7c6af7;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-align: center;
+        padding: 4px 0;
+        transform: rotate(45deg);
+      }
+    `,
+    hints: [
+      'The card needs overflow: hidden so the ribbon\'s corners get clipped to the card shape.',
+      'The ribbon is a wide box rotated 45 degrees with transform: rotate(45deg).',
+      'Positioning is trial and error: nudge top/right until the rotated strip crosses the corner cleanly.',
+    ],
+  },
+  {
+    id: 20,
+    title: 'Skeleton Loader',
+    difficulty: 'easy',
+    description: 'A loading placeholder: an avatar circle plus two text bars.',
+    timeLimit: 110,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="skeleton"><div class="avatar"></div><div class="lines"><div class="line w1"></div><div class="line w2"></div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .skeleton {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #262636;
+        flex-shrink: 0;
+      }
+      .lines {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .line {
+        height: 12px;
+        border-radius: 4px;
+        background: #262636;
+      }
+      .w1 { width: 140px; }
+      .w2 { width: 90px; }
+    `,
+    hints: [
+      'The avatar and text block sit side by side in a flex row with a gap.',
+      'The two text lines are stacked in their own flex column, each a different width.',
+      'flex-shrink: 0 on the avatar stops it from getting squeezed if space is tight.',
+    ],
+  },
 ]
