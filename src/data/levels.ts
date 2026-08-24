@@ -821,4 +821,236 @@ export const LEVELS: Level[] = [
       'flex-shrink: 0 on the avatar stops it from getting squeezed if space is tight.',
     ],
   },
+  {
+    id: 21,
+    title: 'Diagonal Split',
+    difficulty: 'medium',
+    description: 'The background is split diagonally into two solid colors.',
+    timeLimit: 130,
+    pointsToWin: 85,
+    html: `<div class="container"></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: linear-gradient(135deg, #7c6af7 50%, #14141f 50%);
+      }
+    `,
+    hints: [
+      'This is one gradient, not two elements — a linear-gradient with a hard color stop.',
+      'Two color stops at the exact same percentage (50%, 50%) creates a sharp edge instead of a fade.',
+      'The angle (135deg) controls the direction of the split.',
+    ],
+  },
+  {
+    id: 22,
+    title: 'Quote Card',
+    difficulty: 'medium',
+    description: 'A pull-quote with a large decorative quotation mark.',
+    timeLimit: 160,
+    pointsToWin: 75,
+    html: `<div class="container"><div class="quote"><p class="text">Design is not just what it looks like. Design is how it works.</p><div class="author">— Steve Jobs</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .quote {
+        position: relative;
+        max-width: 280px;
+        padding-top: 24px;
+      }
+      .quote::before {
+        content: '"';
+        position: absolute;
+        top: -34px;
+        left: -8px;
+        font-size: 80px;
+        font-weight: 800;
+        color: rgba(124,106,247,0.35);
+        line-height: 1;
+      }
+      .text {
+        font-size: 16px;
+        font-weight: 600;
+        color: white;
+        line-height: 1.5;
+        margin-bottom: 12px;
+      }
+      .author {
+        font-size: 13px;
+        color: #8888a0;
+      }
+    `,
+    hints: [
+      'The giant quotation mark is generated content: .quote::before { content: \'"\'; }',
+      'position: relative on .quote and position: absolute on ::before lets the mark float above the text.',
+      'A dim, semi-transparent color keeps the mark decorative instead of competing with the real text.',
+    ],
+  },
+  {
+    id: 23,
+    title: 'Tag List',
+    difficulty: 'easy',
+    description: 'A wrapped row of colored pill tags.',
+    timeLimit: 120,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="tags"><span class="tag purple">Design</span><span class="tag green">CSS</span><span class="tag pink">Frontend</span><span class="tag blue">React</span></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-width: 260px;
+      }
+      .tag {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 999px;
+      }
+      .purple { background: rgba(124,106,247,0.15); color: #a78bfa; }
+      .green  { background: rgba(52,211,153,0.15);  color: #34d399; }
+      .pink   { background: rgba(244,114,182,0.15); color: #f472b6; }
+      .blue   { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+    `,
+    hints: [
+      'flex-wrap: wrap lets the tags flow onto a new line once they run out of room.',
+      'Each tag pairs a soft, low-opacity background with a matching brighter text color.',
+      'gap handles spacing between tags in both directions — no manual margins needed.',
+    ],
+  },
+  {
+    id: 24,
+    title: 'Vertical Timeline',
+    difficulty: 'hard',
+    description: 'A vertical line connecting three stacked milestone dots.',
+    timeLimit: 200,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="timeline"><div class="item"><div class="dot"></div><div class="label">Started project</div></div><div class="item"><div class="dot active"></div><div class="label">In progress</div></div><div class="item"><div class="dot"></div><div class="label">Launch</div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .timeline {
+        position: relative;
+        padding-left: 28px;
+      }
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        background: #262636;
+      }
+      .item {
+        position: relative;
+        margin-bottom: 28px;
+      }
+      .item:last-child { margin-bottom: 0; }
+      .dot {
+        position: absolute;
+        left: -28px;
+        top: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #262636;
+        border: 2px solid #0b0b12;
+      }
+      .dot.active {
+        background: #7c6af7;
+        box-shadow: 0 0 0 3px rgba(124,106,247,0.25);
+      }
+      .label {
+        font-size: 13px;
+        color: #c4c4d4;
+        font-weight: 500;
+      }
+    `,
+    hints: [
+      'The connecting line is a single absolutely-positioned ::before on the timeline container, not per-item.',
+      'Each dot is absolutely positioned to the left of its label, relative to its own .item.',
+      'The active dot gets a soft glow using box-shadow with a spread and no blur.',
+    ],
+  },
+  {
+    id: 25,
+    title: 'Credit Card',
+    difficulty: 'hard',
+    description: 'A gradient credit card with a chip, number, and holder name.',
+    timeLimit: 210,
+    pointsToWin: 65,
+    html: `<div class="container"><div class="card"><div class="chip"></div><div class="number">4029&nbsp;&nbsp;1234&nbsp;&nbsp;5678&nbsp;&nbsp;9012</div><div class="bottom"><div class="name">A. SHARMA</div><div class="expiry">05/29</div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .card {
+        width: 260px;
+        height: 160px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #7c6af7, #4c3fc7);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .chip {
+        width: 36px;
+        height: 26px;
+        border-radius: 5px;
+        background: rgba(255,255,255,0.6);
+      }
+      .number {
+        font-family: monospace;
+        font-size: 16px;
+        letter-spacing: 0.05em;
+        color: white;
+        font-weight: 600;
+      }
+      .bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+      .name, .expiry {
+        font-size: 11px;
+        color: rgba(255,255,255,0.85);
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+    `,
+    hints: [
+      'The card is a flex column with justify-content: space-between to spread the chip, number, and bottom row vertically.',
+      'The chip is just a small rounded rectangle with a semi-transparent white fill.',
+      'The bottom row (name + expiry) is its own flex row with space-between.',
+    ],
+  },
 ]
