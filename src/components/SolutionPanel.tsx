@@ -5,12 +5,13 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface Props {
-  targetCSS:  string
-  userCSS:    string
-  score:      number
-  levelTitle: string
-  onNext:     () => void
-  onRetry:    () => void
+  targetCSS:    string
+  userCSS:      string
+  score:        number
+  levelTitle:   string
+  hasNextLevel: boolean
+  onNext:       () => void
+  onRetry:      () => void
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -56,6 +57,7 @@ export default function SolutionPanel({
   userCSS,
   score,
   levelTitle,
+  hasNextLevel,
   onNext,
   onRetry,
 }: Props) {
@@ -88,7 +90,7 @@ export default function SolutionPanel({
               onClick={onNext}
               className="px-7 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors"
             >
-              Next Level →
+              {hasNextLevel ? 'Next Level →' : 'All Levels ✓'}
             </button>
             <button
               onClick={onRetry}
