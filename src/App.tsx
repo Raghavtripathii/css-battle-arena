@@ -106,7 +106,16 @@ export default function App() {
                 userCSS={state.userCSS}
                 score={state.score}
                 levelTitle={currentLevel.title}
-                onNext={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
+                hasNextLevel={LEVELS.some(l => l.id === currentLevel.id + 1)}
+                onNext={() => {
+                  const next = LEVELS.find(l => l.id === currentLevel.id + 1)
+                  if (next) {
+                    dispatch({ type: 'START_LEVEL', levelId: next.id })
+                  } else {
+                    // last level — nothing to advance to, send them back to browse
+                    dispatch({ type: 'GO_LEVEL_SELECT' })
+                  }
+                }}
                 onRetry={() => dispatch({ type: 'RETRY_LEVEL' })}
               />
             </motion.div>
