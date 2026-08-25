@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useScoreAnimation } from '../hooks/useScoreAnimation'
 
 interface Props {
   targetCSS:    string
@@ -62,6 +63,7 @@ export default function SolutionPanel({
   onRetry,
 }: Props) {
   const [showSolution, setShowSolution] = useState(false)
+  const animatedScore = useScoreAnimation(score, 900)
 
   const isPerfect   = score === 100
   const isGood      = score >= 90
@@ -83,7 +85,7 @@ export default function SolutionPanel({
           <div className="text-5xl mb-3">{emoji}</div>
           <h2 className="text-3xl font-extrabold mb-1">{headline}</h2>
           <p className="text-gray-500 text-sm mb-4">{levelTitle}</p>
-          <div className={`text-6xl font-black ${scoreColor} mb-6`}>{score}%</div>
+          <div className={`text-6xl font-black ${scoreColor} mb-6 tabular-nums`}>{animatedScore}%</div>
 
           <div className="flex gap-3 justify-center">
             <button

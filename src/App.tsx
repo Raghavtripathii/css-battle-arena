@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGameReducer } from './hooks/useGameReducer'
+import { useScoreAnimation } from './hooks/useScoreAnimation'
 import GameScreen from './components/GameScreen'
 import SolutionPanel from './components/SolutionPanel'
 import ProgressStats from './components/ProgressStats'
@@ -22,6 +23,7 @@ const DIFFICULTY_STYLES: Record<string, string> = {
 export default function App() {
   const [state, dispatch] = useGameReducer()
   const currentLevel = LEVELS.find(l => l.id === state.currentLevelId)
+  const animatedFailScore = useScoreAnimation(state.score, 700)
 
   return (
     <ErrorBoundary>
@@ -129,7 +131,7 @@ export default function App() {
                   {state.timeLeft <= 0 ? "Time's Up" : 'Not Quite There'}
                 </h2>
                 <p className="text-gray-400 mb-3">You reached</p>
-                <div className="text-6xl font-black text-rose-400 mb-12 tabular-nums">{state.score}%</div>
+                <div className="text-6xl font-black text-rose-400 mb-12 tabular-nums">{animatedFailScore}%</div>
                 <div className="flex gap-4 justify-center">
                   <button onClick={() => dispatch({ type: 'RETRY_LEVEL' })}
                     className="px-7 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors">
