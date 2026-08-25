@@ -1053,4 +1053,244 @@ export const LEVELS: Level[] = [
       'The bottom row (name + expiry) is its own flex row with space-between.',
     ],
   },
+  {
+    id: 26,
+    title: 'Search Bar',
+    difficulty: 'easy',
+    description: 'A rounded search input with an icon on the left.',
+    timeLimit: 120,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="search"><div class="icon"></div><span class="placeholder">Search levels…</span></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 240px;
+        background: #1c1c2a;
+        border: 1px solid #2a2a3c;
+        border-radius: 10px;
+        padding: 10px 14px;
+      }
+      .icon {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #6b6b80;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .placeholder {
+        font-size: 13px;
+        color: #6b6b80;
+      }
+    `,
+    hints: [
+      'The search icon is faked as a plain circle — no real magnifying glass needed at this size.',
+      'A subtle 1px border in a slightly lighter shade than the background gives the input definition.',
+      'flex-shrink: 0 keeps the icon circle from getting squished by the text next to it.',
+    ],
+  },
+  {
+    id: 27,
+    title: 'Stat Cards Row',
+    difficulty: 'medium',
+    description: 'Three equal-width stat cards in a row, each with a label and number.',
+    timeLimit: 150,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="row"><div class="card"><div class="num">2.4k</div><div class="lbl">Users</div></div><div class="card"><div class="num">89%</div><div class="lbl">Uptime</div></div><div class="card"><div class="num">312</div><div class="lbl">Levels</div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+      }
+      .card {
+        flex: 1;
+        background: #17172a;
+        border-radius: 12px;
+        padding: 16px 12px;
+        text-align: center;
+      }
+      .num {
+        font-size: 22px;
+        font-weight: 800;
+        color: #a78bfa;
+        margin-bottom: 4px;
+      }
+      .lbl {
+        font-size: 11px;
+        color: #8888a0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+    `,
+    hints: [
+      'flex: 1 on each card makes all three share the row equally, regardless of content length.',
+      'text-align: center keeps both the number and label centered within each card.',
+      'gap on the row handles spacing — no need for margins on individual cards.',
+    ],
+  },
+  {
+    id: 28,
+    title: 'Folder Icon',
+    difficulty: 'medium',
+    description: 'A flat folder icon built with layered boxes — no images.',
+    timeLimit: 160,
+    pointsToWin: 76,
+    html: `<div class="container"><div class="folder"><div class="tab"></div><div class="body"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .folder {
+        position: relative;
+        width: 100px;
+      }
+      .tab {
+        width: 40px;
+        height: 12px;
+        background: #fbbf24;
+        border-radius: 4px 4px 0 0;
+      }
+      .body {
+        width: 100px;
+        height: 68px;
+        background: #fcd34d;
+        border-radius: 0 8px 8px 8px;
+      }
+    `,
+    hints: [
+      'This is two stacked boxes — a small tab and a wider body directly beneath it, no clever tricks.',
+      'Only round the corners that are actually visible on the outside of the shape.',
+      'The tab sits flush on top of the body — no gap, no absolute positioning required.',
+    ],
+  },
+  {
+    id: 29,
+    title: 'Comparison Slider',
+    difficulty: 'hard',
+    description: 'A before/after image slider with a vertical handle at 60%.',
+    timeLimit: 190,
+    pointsToWin: 70,
+    html: `<div class="container"><div class="slider"><div class="before"></div><div class="after"></div><div class="handle"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .slider {
+        position: relative;
+        width: 280px;
+        height: 180px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .before, .after {
+        position: absolute;
+        top: 0;
+        height: 100%;
+      }
+      .before { left: 0; width: 100%; background: #34d399; }
+      .after  { right: 0; width: 40%; background: #7c6af7; }
+      .handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 60%;
+        width: 3px;
+        background: white;
+        transform: translateX(-50%);
+      }
+    `,
+    hints: [
+      'Both panels are absolutely positioned inside the slider, stacked on top of each other.',
+      'Instead of clip-path, the "after" panel is simply sized to 40% width and anchored to the right edge — same visual result, simpler CSS.',
+      'The handle is a thin vertical bar positioned at the same 60% split, centered with translateX(-50%).',
+    ],
+  },
+  {
+    id: 30,
+    title: 'Kanban Column',
+    difficulty: 'hard',
+    description: 'A single kanban column header with a count badge, holding two task cards.',
+    timeLimit: 200,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="column"><div class="header"><span class="title">In Progress</span><span class="count">2</span></div><div class="task">Design the landing page</div><div class="task">Fix scoring bug</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .column {
+        width: 220px;
+        background: #14141f;
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #c4c4d4;
+      }
+      .count {
+        font-size: 11px;
+        font-weight: 700;
+        color: #a78bfa;
+        background: rgba(124,106,247,0.15);
+        border-radius: 999px;
+        padding: 2px 8px;
+      }
+      .task {
+        background: #1c1c2a;
+        border: 1px solid #262636;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 12px;
+        color: #c4c4d4;
+        margin-bottom: 8px;
+      }
+      .task:last-child { margin-bottom: 0; }
+    `,
+    hints: [
+      'The header uses justify-content: space-between to push the title left and the count badge right.',
+      'Each task card is just a bordered box — style .task once and every card inherits it.',
+      'margin-bottom on .task with a :last-child override avoids trailing extra space at the bottom.',
+    ],
+  },
 ]
