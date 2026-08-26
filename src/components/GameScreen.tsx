@@ -1,5 +1,3 @@
-// components/GameScreen.tsx
-
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
@@ -22,6 +20,7 @@ function buildDoc(html: string, userCSS: string): string {
 <html>
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { width: ${PREVIEW_W}px; height: ${PREVIEW_H}px; overflow: hidden; }
@@ -31,20 +30,6 @@ function buildDoc(html: string, userCSS: string): string {
 <body>${html}</body>
 </html>`
 }
-
-// Renders an iframe's live DOM to a canvas.
-//
-// Previously this used an SVG <foreignObject> + <Image> + canvas trick.
-// That approach reliably produced a "tainted" canvas in Chrome — even for
-// fully local, same-origin content — because Chrome's SVG image decoder
-// treats any foreignObject subtree as opaque/unsafe pixel data. The result
-// was getImageData() throwing a SecurityError on *every* capture, which the
-// code silently swallowed and reported as a 0% score regardless of how
-// correct the CSS actually was.
-//
-// html2canvas avoids this entirely: it walks the real DOM and paints each
-// element directly onto the canvas using its computed styles, so there's no
-// image-decode step for the browser to taint.
 async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
   const doc = iframe.contentDocument
   if (!doc || !doc.body) return null
@@ -96,10 +81,9 @@ function compareCanvases(a: HTMLCanvasElement, b: HTMLCanvasElement): number {
 
 function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatch<GameAction> }) {
   useEffect(() => {
-    if (seconds <= 0) return
     const id = setInterval(() => dispatch({ type: 'TICK' }), 1000)
     return () => clearInterval(id)
-  }, [seconds, dispatch])
+  }, [dispatch])
 
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
@@ -142,7 +126,27 @@ interface Props {
 }
 
 export default function GameScreen({ state, dispatch }: Props) {
-  const level = LEVELS.find(l => l.id === state.currentLevelId) as Level
+  const level = LEVELS.find(l => l.id === state.currentLevelId)
+  if (!level) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] text-center px-6">
+        <div>
+          <p className="text-gray-400 mb-4">That level couldn't be found.</p>
+          <button
+            onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
+            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
+          >
+            Back to levels
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return <Play level={level} state={state} dispatch={dispatch} />
+}
+
+function Play({ level, state, dispatch }: Props & { level: Level }) {
 
   const editorRef    = useRef<HTMLDivElement>(null)
   const editorView   = useRef<EditorView | null>(null)
@@ -200,7 +204,7 @@ export default function GameScreen({ state, dispatch }: Props) {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  async function handleSubmit() {
+  const handleSubmit = useCallback(async () => {
     if (isSubmitting) return
     if (scoreTimer.current) clearTimeout(scoreTimer.current)
 
@@ -222,7 +226,7 @@ export default function GameScreen({ state, dispatch }: Props) {
     // if either preview failed to render, still surface a result instead of doing nothing
     const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas) : 0
     dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
-  }
+  }, [isSubmitting, state.userCSS, dispatch])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
