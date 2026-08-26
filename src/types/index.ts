@@ -1,5 +1,3 @@
-// types/index.ts
-
 export interface Level {
   id:          number
   title:       string
@@ -10,14 +8,6 @@ export interface Level {
   hints:       string[]
   pointsToWin: number        // usually 90
   timeLimit:   number        // in seconds
-}
-
-// per-level progress — persisted to localStorage
-export interface LevelProgress {
-  completed:    boolean
-  personalBest: number
-  savedCode:    string
-  hintsUsed:    number
 }
 
 export type GameScreen =
@@ -33,7 +23,6 @@ export interface GameState {
   score:          number
   timeLeft:       number
   userCSS:        string
-  hintsRevealed:  number
   isTimerRunning: boolean
 }
 
@@ -45,7 +34,4 @@ export type GameAction =
   | { type: 'UPDATE_SCORE';   score: number }
   | { type: 'SUBMIT_RESULT';  score: number }
   | { type: 'TICK' }
-  | { type: 'REVEAL_HINT' }
-  | { type: 'COMPLETE_LEVEL'; finalScore: number }
-  | { type: 'FAIL_LEVEL' }
   | { type: 'RETRY_LEVEL' }
