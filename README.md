@@ -51,6 +51,12 @@ npm run dev
 # type-check + build for production
 npm run build
 
+# type-check only, no build output
+npm run typecheck
+
+# lint
+npm run lint
+
 # preview the production build
 npm run preview
 ```
