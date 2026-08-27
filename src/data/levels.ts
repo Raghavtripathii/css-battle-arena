@@ -1293,4 +1293,240 @@ export const LEVELS: Level[] = [
       'margin-bottom on .task with a :last-child override avoids trailing extra space at the bottom.',
     ],
   },
+  {
+    id: 31,
+    title: 'Volume Bars',
+    difficulty: 'easy',
+    description: 'A row of five equalizer bars, ascending in height.',
+    timeLimit: 120,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="bars"><div class="bar h1"></div><div class="bar h2"></div><div class="bar h3"></div><div class="bar h4"></div><div class="bar h5"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0f0f18;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        height: 80px;
+      }
+      .bar {
+        width: 12px;
+        background: #7c6af7;
+        border-radius: 3px;
+      }
+      .h1 { height: 30%; }
+      .h2 { height: 50%; }
+      .h3 { height: 70%; }
+      .h4 { height: 90%; }
+      .h5 { height: 100%; }
+    `,
+    hints: [
+      'align-items: flex-end on the row keeps every bar anchored to the same bottom line as it grows.',
+      'Percentage heights are relative to the fixed-height .bars container.',
+      'One shared .bar class handles width/color — only height changes per bar.',
+    ],
+  },
+  {
+    id: 32,
+    title: 'Empty State',
+    difficulty: 'easy',
+    description: 'A centered empty-state message with icon, title, and subtext.',
+    timeLimit: 120,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="empty"><div class="icon">📭</div><div class="title">No results found</div><div class="sub">Try adjusting your search filters</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #14141f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .empty {
+        text-align: center;
+      }
+      .icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+      }
+      .title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #e4e4ef;
+        margin-bottom: 6px;
+      }
+      .sub {
+        font-size: 12px;
+        color: #6b6b80;
+      }
+    `,
+    hints: [
+      'Everything is centered together as one block — text-align: center handles all three children at once.',
+      'Consistent margin-bottom between the icon, title, and subtext creates the vertical rhythm.',
+      'The subtext is deliberately dimmer and smaller than the title to keep it secondary.',
+    ],
+  },
+  {
+    id: 33,
+    title: 'Segmented Control',
+    difficulty: 'medium',
+    description: 'A three-option toggle with the middle segment active.',
+    timeLimit: 150,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="segment"><div class="option">Day</div><div class="option active">Week</div><div class="option">Month</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0b0b12;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .segment {
+        display: flex;
+        background: #1a1a2a;
+        border-radius: 10px;
+        padding: 4px;
+        gap: 2px;
+      }
+      .option {
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #7a7a90;
+        border-radius: 7px;
+      }
+      .option.active {
+        background: #7c6af7;
+        color: white;
+      }
+    `,
+    hints: [
+      'The outer track has its own padding, creating an inset border effect around the options.',
+      'Only the active segment gets a background — the others are transparent against the track.',
+      'A small border-radius on each option, smaller than the track\'s, keeps the nesting looking intentional.',
+    ],
+  },
+  {
+    id: 34,
+    title: 'Weather Widget',
+    difficulty: 'medium',
+    description: 'A small weather card with temperature, condition, and city.',
+    timeLimit: 160,
+    pointsToWin: 78,
+    html: `<div class="container"><div class="weather"><div class="temp">24°</div><div class="info"><div class="condition">Partly Cloudy</div><div class="city">Lucknow</div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: linear-gradient(160deg, #4c3fc7, #7c6af7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .weather {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: white;
+      }
+      .temp {
+        font-size: 48px;
+        font-weight: 800;
+      }
+      .info {
+        border-left: 1px solid rgba(255,255,255,0.3);
+        padding-left: 16px;
+      }
+      .condition {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .city {
+        font-size: 12px;
+        color: rgba(255,255,255,0.7);
+      }
+    `,
+    hints: [
+      'The whole card sits on a diagonal gradient background, not a flat color.',
+      'A thin semi-transparent left border on .info creates a divider without a separate element.',
+      'The temperature is deliberately much larger than everything else — it should dominate at a glance.',
+    ],
+  },
+  {
+    id: 35,
+    title: 'Media Player Bar',
+    difficulty: 'hard',
+    description: 'A compact music player: cover art, track info, and a progress line.',
+    timeLimit: 200,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="player"><div class="cover"></div><div class="info"><div class="track">Midnight Drive</div><div class="artist">Neon Highway</div><div class="progress"><div class="fill"></div></div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .player {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 260px;
+        background: #17172a;
+        border-radius: 14px;
+        padding: 12px;
+      }
+      .cover {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f472b6, #7c6af7);
+        flex-shrink: 0;
+      }
+      .info {
+        flex: 1;
+        min-width: 0;
+      }
+      .track {
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 2px;
+      }
+      .artist {
+        font-size: 11px;
+        color: #8888a0;
+        margin-bottom: 8px;
+      }
+      .progress {
+        height: 3px;
+        background: #2a2a40;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .fill {
+        width: 40%;
+        height: 100%;
+        background: #7c6af7;
+      }
+    `,
+    hints: [
+      'flex: 1 with min-width: 0 on .info lets the track title truncate properly instead of overflowing the player.',
+      'The progress bar reuses the same track/fill pattern as the earlier Progress Bar level.',
+      'The cover art is a plain gradient square — no image needed to sell the effect.',
+    ],
+  },
 ]
