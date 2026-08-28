@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 
 import type { GameState, GameAction, Level } from '../types'
 import { LEVELS } from '../data/levels'
+import { compareCanvases } from '../lib/scoring'
 
 import html2canvas from 'html2canvas'
 
@@ -55,28 +56,6 @@ async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElem
     // an unreadable/failed render — treat as a failed capture rather than crash
     return null
   }
-}
-
-function compareCanvases(a: HTMLCanvasElement, b: HTMLCanvasElement): number {
-  const ac = a.getContext('2d')
-  const bc = b.getContext('2d')
-  if (!ac || !bc) return 0
-
-  const ad = ac.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
-  const bd = bc.getImageData(0, 0, PREVIEW_W, PREVIEW_H).data
-
-  const total = PREVIEW_W * PREVIEW_H
-  let matched = 0
-
-  for (let i = 0; i < ad.length; i += 4) {
-    if (
-      Math.abs(ad[i]   - bd[i])   <= 10 &&
-      Math.abs(ad[i+1] - bd[i+1]) <= 10 &&
-      Math.abs(ad[i+2] - bd[i+2]) <= 10
-    ) matched++
-  }
-
-  return Math.round((matched / total) * 100)
 }
 
 function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatch<GameAction> }) {
@@ -190,7 +169,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     isScoring.current = false
     if (!tCanvas || !uCanvas) return
 
-    const score = compareCanvases(tCanvas, uCanvas)
+    const score = compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H)
     dispatch({ type: 'UPDATE_SCORE', score })
   }, [dispatch])
 
@@ -224,7 +203,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     setIsSubmitting(false)
 
     // if either preview failed to render, still surface a result instead of doing nothing
-    const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas) : 0
+    const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H) : 0
     dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
   }, [isSubmitting, state.userCSS, dispatch])
 
