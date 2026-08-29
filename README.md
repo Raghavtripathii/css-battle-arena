@@ -57,6 +57,9 @@ npm run typecheck
 # lint
 npm run lint
 
+# run unit tests
+npm run test
+
 # preview the production build
 npm run preview
 ```
@@ -73,8 +76,11 @@ src/
 ├── data/
 │   └── levels.ts              # All levels: markup, target CSS, hints, time limit, pass score
 ├── hooks/
-│   ├── useGameReducer.ts      # Core game state machine (screens, score, timer, hints, persistence)
+│   ├── useGameReducer.ts      # Core game state machine (screens, score, timer, persistence)
 │   └── useScoreAnimation.ts   # RAF-driven eased number animation for score displays
+├── lib/
+│   ├── scoring.ts             # Pure pixel-comparison logic (unit tested, no DOM required)
+│   └── scoring.test.ts        # Unit tests for the scoring engine
 └── components/
     ├── GameScreen.tsx         # The main play screen: editor, target/user iframes, live + submit scoring
     ├── SolutionPanel.tsx      # Post-completion screen with animated score + reference solution
@@ -122,4 +128,4 @@ The `.container` (or whatever top-level class you use) should size itself to fil
 
 ## License
 
-No license file is currently included — treat this as private/unlicensed unless one is added.
+MIT — see [LICENSE](./LICENSE).
