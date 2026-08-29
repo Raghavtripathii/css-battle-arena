@@ -1,15 +1,21 @@
 # ⚔️ CSS Battle Arena
 
+[![Live Demo](https://img.shields.io/badge/demo-live-7c6af7)](https://css-battle-arena.vercel.app/) [![CI](https://github.com/Raghavtripathii/css-battle-arena/actions/workflows/ci.yml/badge.svg)](https://github.com/Raghavtripathii/css-battle-arena/actions/workflows/ci.yml)
+
+**🔗 Play it live: [css-battle-arena.vercel.app](https://css-battle-arena.vercel.app/)**
+
 A browser-based CSS challenge game. You're given a target design and an empty stylesheet — match the target as closely as possible before the clock runs out. Every submission is scored by an actual **pixel-by-pixel comparison** between your rendered output and the target, not a guess or a checklist.
 
 Built with React 18, TypeScript, Vite, Tailwind CSS v4, CodeMirror 6, and Framer Motion.
 
 ## How it works
 
+35 levels, easy to hard.
+
 1. Pick a level from the grid — each one shows a piece of fixed HTML markup and a target visual.
 2. Write CSS in the CodeMirror editor to make your `.container` (rendered in a live iframe) match the target.
-3. As you type, both the target and your version are rendered off-DOM, screenshotted via an SVG `foreignObject` trick, and compared canvas-to-canvas with a per-channel RGB tolerance.
-4. Hit a score at or above the level's pass threshold and you clear it. Run out of time and the level fails — you can always retry.
+3. As you type, both the target and your version are rendered off-DOM to a canvas via `html2canvas` and compared pixel-by-pixel with a per-channel RGB tolerance, updating the live score bar.
+4. When you're ready, click **Submit** (or `Ctrl/Cmd + Enter`) — this always gives you a definitive result: pass if you're at or above the level's threshold, fail otherwise. The live score bar is just a preview; only Submit decides the outcome. Run out of time before submitting and the level fails automatically — you can always retry.
 5. After clearing, the Solution panel reveals a reference CSS implementation to compare against your own.
 
 There's no single "correct" CSS for any level — the reference solution is one clean way to solve it, and the scoring engine doesn't care how you got there, only what it looks like on screen.
@@ -34,6 +40,9 @@ There's no single "correct" CSS for any level — the reference solution is one 
 | Styling | Tailwind CSS v4 (via `@tailwindcss/vite`) |
 | Code editor | CodeMirror 6 (`@codemirror/*`, CSS language support, One Dark theme) |
 | Animation | Framer Motion |
+| Testing | Vitest |
+| CI | GitHub Actions (lint + test + typecheck + build on every push/PR) |
+| Deployment | Vercel |
 | State | A single `useReducer` store (no external state library) |
 | Persistence | `localStorage` (per-level saved code, completion flag, personal best) |
 
@@ -106,7 +115,7 @@ Levels are plain data — no code changes needed elsewhere. Add an entry to `LEV
 
 ```ts
 {
-  id: 31,
+  id: 36,
   title: 'Your Level Name',
   difficulty: 'easy' | 'medium' | 'hard',
   description: 'One-line description shown in the header.',
