@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGameReducer } from './hooks/useGameReducer'
 import { useScoreAnimation } from './hooks/useScoreAnimation'
@@ -152,48 +153,108 @@ export default function App() {
   )
 }
 
+type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard'
+
+const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string }[] = [
+  { value: 'all',    label: 'All' },
+  { value: 'easy',   label: 'Easy' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'hard',   label: 'Hard' },
+]
+
 function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
+  const [query, setQuery]         = useState('')
+  const [difficulty, setDifficulty] = useState<DifficultyFilter>('all')
+
+  const filtered = LEVELS.filter(level => {
+    const matchesQuery = level.title.toLowerCase().includes(query.trim().toLowerCase())
+    const matchesDifficulty = difficulty === 'all' || level.difficulty === difficulty
+    return matchesQuery && matchesDifficulty
+  })
+
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {LEVELS.map((level, i) => {
-        const completed = localStorage.getItem(`completed_${level.id}`) === 'true'
-        const best = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
-        return (
-          <motion.button key={level.id}
-            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -2 }}
-            transition={{ delay: i * 0.04 }}
-            onClick={() => dispatch({ type: 'START_LEVEL', levelId: level.id })}
-            className="text-left p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/40 transition-all group"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <span className="text-2xl font-black text-white/20 font-mono tracking-tight">
-                {String(level.id).padStart(2, '0')}
-              </span>
-              {completed && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold">
-                  ✓ Done
-                </span>
-              )}
-            </div>
+    <div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1 max-w-xs">
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search levels…"
+            aria-label="Search levels by name"
+            className="w-full text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+          />
+          <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </div>
 
-            <div className="font-semibold text-sm text-white mb-3 leading-snug group-hover:text-purple-300 transition-colors">
-              {level.title}
-            </div>
+        <div className="flex gap-2" role="group" aria-label="Filter by difficulty">
+          {DIFFICULTY_FILTERS.map(f => (
+            <button
+              key={f.value}
+              onClick={() => setDifficulty(f.value)}
+              aria-pressed={difficulty === f.value}
+              className={`text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors ${
+                difficulty === f.value
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:bg-white/[0.07]'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            <div className="flex items-center justify-between">
-              <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${DIFFICULTY_STYLES[level.difficulty]}`}>
-                {level.difficulty}
-              </span>
-              {best > 0 && (
-                <span className="text-[11px] text-gray-600 font-mono">
-                  {best}%
-                </span>
-              )}
-            </div>
-          </motion.button>
-        )
-      })}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-600 text-sm">
+          No levels match "{query}"{difficulty !== 'all' ? ` in ${difficulty}` : ''}.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {filtered.map((level, i) => {
+            const completed = localStorage.getItem(`completed_${level.id}`) === 'true'
+            const best = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
+            return (
+              <motion.button key={level.id}
+                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -2 }}
+                transition={{ delay: Math.min(i, 12) * 0.03 }}
+                onClick={() => dispatch({ type: 'START_LEVEL', levelId: level.id })}
+                className="text-left p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/40 transition-all group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-2xl font-black text-white/20 font-mono tracking-tight">
+                    {String(level.id).padStart(2, '0')}
+                  </span>
+                  {completed && (
+                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold">
+                      ✓ Done
+                    </span>
+                  )}
+                </div>
+
+                <div className="font-semibold text-sm text-white mb-3 leading-snug group-hover:text-purple-300 transition-colors">
+                  {level.title}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${DIFFICULTY_STYLES[level.difficulty]}`}>
+                    {level.difficulty}
+                  </span>
+                  {best > 0 && (
+                    <span className="text-[11px] text-gray-600 font-mono">
+                      {best}%
+                    </span>
+                  )}
+                </div>
+              </motion.button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
