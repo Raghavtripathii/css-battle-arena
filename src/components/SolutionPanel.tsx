@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useScoreAnimation } from '../hooks/useScoreAnimation'
+import Confetti from './Confetti'
 
 interface Props {
   targetCSS:    string
@@ -78,6 +79,8 @@ export default function SolutionPanel({
       transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
       className="min-h-screen px-6 py-10 bg-[#0a0a0f]"
     >
+      {isPerfect && <Confetti />}
+
       <div className="max-w-3xl mx-auto">
 
         {/* score header */}
