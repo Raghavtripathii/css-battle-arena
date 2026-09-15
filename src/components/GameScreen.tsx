@@ -182,6 +182,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   }, [runScore])
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return
@@ -212,14 +213,26 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault()
         handleSubmit()
+        return
       }
       if (e.key === 'Escape') {
+        if (showShortcuts) {
+          setShowShortcuts(false)
+          return
+        }
         dispatch({ type: 'GO_LEVEL_SELECT' })
+        return
+      }
+      if (e.key === '?') {
+        const target = e.target as HTMLElement | null
+        if (target?.closest('.cm-content')) return
+        e.preventDefault()
+        setShowShortcuts(v => !v)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [handleSubmit, dispatch])
+  }, [handleSubmit, dispatch, showShortcuts])
 
   // codemirror setup — runs once on mount
   useEffect(() => {
@@ -369,6 +382,59 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
       </div>
 
       <ScoreBar score={state.score} target={level.pointsToWin} hasInput={hasInput} />
+
+      <button
+        onClick={() => setShowShortcuts(true)}
+        aria-label="Keyboard shortcuts"
+        title="Keyboard shortcuts"
+        className="fixed bottom-5 right-5 w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-gray-400 hover:text-white text-sm font-bold transition-colors flex items-center justify-center z-40"
+      >
+        ?
+      </button>
+
+      {showShortcuts && (
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-6"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-[#14141f] border border-white/[0.08] rounded-2xl p-6 max-w-sm w-full"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-bold text-white">Keyboard shortcuts</h3>
+              <button
+                onClick={() => setShowShortcuts(false)}
+                aria-label="Close"
+                className="text-gray-600 hover:text-gray-300 text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+            <dl className="space-y-3">
+              {[
+                { keys: ['Ctrl/⌘', 'Enter'], desc: 'Submit your CSS' },
+                { keys: ['Esc'],           desc: 'Back to level select' },
+                { keys: ['?'],             desc: 'Toggle this panel' },
+              ].map(({ keys, desc }) => (
+                <div key={desc} className="flex items-center justify-between">
+                  <dt className="text-sm text-gray-400">{desc}</dt>
+                  <dd className="flex gap-1">
+                    {keys.map(k => (
+                      <kbd key={k} className="text-[11px] font-mono px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-gray-300">
+                        {k}
+                      </kbd>
+                    ))}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   )
