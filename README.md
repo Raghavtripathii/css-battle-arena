@@ -23,8 +23,12 @@ There's no single "correct" CSS for any level — the reference solution is one 
 ## Features
 
 - 🎯 **Pixel comparison engine** — real canvas-based scoring via `html2canvas`, not heuristics
+- 🔍 **Search & difficulty filter** — find a level by name or narrow to easy/medium/hard on the level-select screen
 - ⏱️ **Timed challenges** — each level has its own time limit and pass threshold
 - ✅ **Deterministic Submit** — always lands on a clear pass/fail result, never a silent no-op
+- 🎉 **Confetti on a perfect score** — a small celebratory burst when you land exactly 100%
+- ⌨️ **Keyboard shortcuts** — `Ctrl/⌘+Enter` to submit, `Esc` to leave, `?` for a shortcuts panel
+- 📲 **Installable (PWA)** — add it to your home screen / desktop and it works fully offline
 - 🏆 **Personal bests & win streaks** — tracked per level
 - 💾 **Autosave** — your CSS is saved to `localStorage` on every keystroke and restored if you leave and come back
 - 📖 **Solution reveal** — compare your CSS against a reference implementation after completing a level
@@ -43,6 +47,8 @@ There's no single "correct" CSS for any level — the reference solution is one 
 | Testing | Vitest |
 | CI | GitHub Actions (lint + test + typecheck + build on every push/PR) |
 | Deployment | Vercel |
+| PWA | `vite-plugin-pwa` (installable, offline-capable via a generated service worker) |
+| Analytics | `@vercel/analytics` (privacy-friendly, no cookies) |
 | State | A single `useReducer` store (no external state library) |
 | Persistence | `localStorage` (per-level saved code, completion flag, personal best) |
 
@@ -91,8 +97,9 @@ src/
 │   ├── scoring.ts             # Pure pixel-comparison logic (unit tested, no DOM required)
 │   └── scoring.test.ts        # Unit tests for the scoring engine
 └── components/
-    ├── GameScreen.tsx         # The main play screen: editor, target/user iframes, live + submit scoring
-    ├── SolutionPanel.tsx      # Post-completion screen with animated score + reference solution
+    ├── GameScreen.tsx         # The main play screen: editor, target/user iframes, live + submit scoring, keyboard shortcuts panel
+    ├── SolutionPanel.tsx      # Post-completion screen with animated score + reference solution + confetti on 100%
+    ├── Confetti.tsx           # Lightweight particle-burst effect (Framer Motion, no extra dependency)
     ├── ProgressStats.tsx      # Aggregate stats card on the level-select screen
     └── ErrorBoundary.tsx      # Class-based fallback UI for uncaught render errors
 ```
