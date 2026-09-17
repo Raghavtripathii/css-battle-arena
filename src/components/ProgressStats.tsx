@@ -5,31 +5,34 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { LEVELS } from '../data/levels'
 
-interface StatBoxProps {
-  label: string
-  value: string | number
-  sub?:  string
-  color?: string
-  delay?: number
+interface StatCardProps {
+  icon:      string
+  iconBg:    string
+  label:     string
+  value:     string | number
+  valueColor?: string
+  delay?:    number
 }
 
-function StatBox({ label, value, sub, color = 'text-white', delay = 0 }: StatBoxProps) {
+function StatCard({ icon, iconBg, label, value, valueColor = 'text-white', delay = 0 }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4 flex flex-col gap-1"
+      className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4 flex items-center gap-3"
     >
-      <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-widest">
-        {label}
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${iconBg}`} aria-hidden="true">
+        {icon}
       </div>
-      <div className={`text-2xl font-extrabold font-mono ${color}`}>
-        {value}
+      <div className="min-w-0">
+        <div className={`text-lg font-extrabold font-mono leading-tight truncate ${valueColor}`}>
+          {value}
+        </div>
+        <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+          {label}
+        </div>
       </div>
-      {sub && (
-        <div className="text-[11px] text-gray-700">{sub}</div>
-      )}
     </motion.div>
   )
 }
@@ -65,30 +68,37 @@ export default function ProgressStats() {
   if (stats.completed === 0) return null
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-      <StatBox
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatCard
+        icon="✓"
+        iconBg="bg-purple-500/15"
         label="Completed"
         value={`${stats.completed} / ${LEVELS.length}`}
-        color="text-purple-400"
+        valueColor="text-purple-300"
         delay={0}
       />
-      <StatBox
+      <StatCard
+        icon="🔥"
+        iconBg="bg-amber-500/15"
         label="Win streak"
         value={stats.streak}
-        sub={stats.streak >= 3 ? '🔥 On fire' : 'consecutive levels'}
-        color={stats.streak >= 3 ? 'text-orange-400' : 'text-white'}
+        valueColor={stats.streak >= 3 ? 'text-amber-300' : 'text-white'}
         delay={0.05}
       />
-      <StatBox
+      <StatCard
+        icon="◎"
+        iconBg="bg-emerald-500/15"
         label="Avg score"
         value={`${stats.avgScore}%`}
-        color={stats.avgScore >= 90 ? 'text-green-400' : 'text-yellow-400'}
+        valueColor={stats.avgScore >= 90 ? 'text-emerald-300' : 'text-yellow-300'}
         delay={0.1}
       />
-      <StatBox
+      <StatCard
+        icon="★"
+        iconBg="bg-pink-500/15"
         label="Best score"
         value={`${stats.bestScore}%`}
-        color="text-green-400"
+        valueColor="text-pink-300"
         delay={0.15}
       />
     </div>
