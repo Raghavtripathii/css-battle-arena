@@ -87,7 +87,7 @@ export default function App() {
                 </div>
 
                 {/* only renders once the player has completed at least one level */}
-                <div className="mb-10">
+                <div className="mb-8">
                   <ProgressStats />
                 </div>
 
@@ -162,6 +162,12 @@ const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string }[] = [
   { value: 'hard',   label: 'Hard' },
 ]
 
+const DIFFICULTY_ACCENT: Record<string, string> = {
+  easy:   'before:bg-emerald-400',
+  medium: 'before:bg-amber-400',
+  hard:   'before:bg-rose-400',
+}
+
 function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
   const [query, setQuery]         = useState('')
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all')
@@ -174,7 +180,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <div className="relative flex-1 max-w-xs">
           <input
             type="text"
@@ -223,7 +229,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
                 whileHover={{ y: -2 }}
                 transition={{ delay: Math.min(i, 12) * 0.03 }}
                 onClick={() => dispatch({ type: 'START_LEVEL', levelId: level.id })}
-                className="text-left p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/40 transition-all group"
+                className={`relative overflow-hidden text-left p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/40 transition-all group before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] ${DIFFICULTY_ACCENT[level.difficulty]}`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-2xl font-black text-white/20 font-mono tracking-tight">
