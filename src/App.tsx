@@ -68,12 +68,33 @@ export default function App() {
                 Start Playing
                 <span aria-hidden="true">→</span>
               </motion.button>
+
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex gap-10 mt-12 relative z-10">
+                <div className="text-center">
+                  <div className="text-xl font-extrabold text-purple-200">{LEVELS.length}</div>
+                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Levels</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-extrabold text-purple-200">3</div>
+                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Difficulties</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-extrabold text-purple-200">100%</div>
+                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Precision scoring</div>
+                </div>
+              </motion.div>
             </motion.div>
           )}
 
           {state.screen === 'levelSelect' && (
-            <motion.div key="levelSelect" {...fade} className="min-h-screen px-6 sm:px-10 py-14">
-              <div className="max-w-5xl mx-auto">
+            <motion.div key="levelSelect" {...fade} className="min-h-screen px-6 sm:px-10 xl:px-16 py-14">
+              {/* Widened from max-w-5xl (1024px) — on real laptop/desktop screens that left
+                  roughly half the viewport as dead empty space to the right. max-w-[1600px]
+                  scales the layout up to genuinely fill wide screens while the grid below
+                  gains extra column breakpoints so it doesn't just stretch existing cards. */}
+              <div className="max-w-[1600px] mx-auto">
 
                 <div className="flex items-center justify-between mb-10">
                   <div>
@@ -181,7 +202,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
   return (
     <div>
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1 max-w-sm">
           <input
             type="text"
             value={query}
@@ -219,7 +240,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
           No levels match "{query}"{difficulty !== 'all' ? ` in ${difficulty}` : ''}.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
           {filtered.map((level, i) => {
             const completed = localStorage.getItem(`completed_${level.id}`) === 'true'
             const best = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
