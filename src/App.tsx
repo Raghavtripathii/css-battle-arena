@@ -6,6 +6,7 @@ import GameScreen from './components/GameScreen'
 import SolutionPanel from './components/SolutionPanel'
 import ProgressStats from './components/ProgressStats'
 import ErrorBoundary from './components/ErrorBoundary'
+import Button, { BUTTON_BASE, BUTTON_VARIANTS } from './components/Button'
 import { LEVELS } from './data/levels'
 import type { GameAction } from './types'
 
@@ -63,7 +64,7 @@ export default function App() {
                 whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
                 transition={{ delay: 0.4 }}
                 onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-                className="inline-flex items-center gap-2.5 px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-lg rounded-full transition-all relative z-10"
+                className={`${BUTTON_BASE} ${BUTTON_VARIANTS.primary} relative z-10`}
                 style={{ boxShadow: '0 8px 30px rgba(124,106,247,0.4)' }}>
                 Start Playing
                 <span aria-hidden="true">→</span>
@@ -153,16 +154,14 @@ export default function App() {
                   {state.timeLeft <= 0 ? "Time's Up" : 'Not Quite There'}
                 </h2>
                 <p className="text-gray-400 mb-3">You reached</p>
-                <div className="text-6xl font-black text-rose-400 mb-12 tabular-nums">{animatedFailScore}%</div>
-                <div className="flex gap-4 justify-center">
-                  <button onClick={() => dispatch({ type: 'RETRY_LEVEL' })}
-                    className="px-7 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors">
+                <div className="text-6xl font-black text-rose-400 tabular-nums">{animatedFailScore}%</div>
+                <div className="flex flex-wrap gap-36 justify-center my-12">
+                  <Button variant="primary" onClick={() => dispatch({ type: 'RETRY_LEVEL' })}>
                     Try Again
-                  </button>
-                  <button onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-                    className="px-7 py-3.5 border border-white/15 text-gray-300 hover:text-white font-semibold rounded-xl transition-colors">
+                  </Button>
+                  <Button variant="secondary" onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}>
                     Level Select
-                  </button>
+                  </Button>
                 </div>
               </div>
             </motion.div>
