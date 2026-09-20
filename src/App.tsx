@@ -6,7 +6,7 @@ import GameScreen from './components/GameScreen'
 import SolutionPanel from './components/SolutionPanel'
 import ProgressStats from './components/ProgressStats'
 import ErrorBoundary from './components/ErrorBoundary'
-import Button, { BUTTON_BASE, BUTTON_VARIANTS } from './components/Button'
+import Button, { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE } from './components/Button'
 import { LEVELS } from './data/levels'
 import type { GameAction } from './types'
 
@@ -34,56 +34,75 @@ export default function App() {
 
           {state.screen === 'home' && (
             <motion.div key="home" {...fade}
-              className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20"
+              className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden"
+              style={{ paddingTop: 100, paddingBottom: 100, paddingLeft: 24, paddingRight: 24 }}
             >
-              <div className="fixed inset-0 pointer-events-none"
-                style={{ background: 'radial-gradient(ellipse 60% 40% at 50% -5%, rgba(124,106,247,0.18) 0%, transparent 65%)' }}
+              {/* radial glow — exact mockup params: 700x500, top:-20%, centered, rgba(124,106,247,0.20) */}
+              <div className="absolute pointer-events-none"
+                style={{
+                  top: '-20%', left: '50%', transform: 'translateX(-50%)',
+                  width: 700, height: 500,
+                  background: 'radial-gradient(ellipse, rgba(124,106,247,0.20) 0%, transparent 70%)',
+                }}
               />
 
               <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.5 }} className="text-7xl mb-8 relative z-10">
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="relative z-10" style={{ fontSize: 64 }}>
                 ⚔️
               </motion.div>
 
+              <div aria-hidden="true" style={{ height: 28 }} />
+
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-5 relative z-10"
-                style={{ background: 'linear-gradient(135deg, #f0f0f8 20%, #7c6af7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                className="relative z-10 font-extrabold"
+                style={{ fontSize: 56, letterSpacing: '-0.02em' }}
               >
-                CSS Battle Arena
+                <span style={{ color: '#f0f0f8' }}>CSS Battle </span>
+                <span style={{ background: 'linear-gradient(135deg, #f0f0f8 20%, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                  Arena
+                </span>
               </motion.h1>
+
+              <div aria-hidden="true" style={{ height: 18 }} />
 
               <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-gray-400 text-lg max-w-md mb-12 leading-relaxed relative z-10">
+                className="relative z-10"
+                style={{ color: '#8a8a9c', fontSize: 17, maxWidth: 460, lineHeight: 1.6 }}>
                 Match target designs by writing CSS.
-                Scored by pixel-perfect comparison — not guesswork.
+                Scored by pixel-perfect comparison not guesswork.
               </motion.p>
+
+              <div aria-hidden="true" style={{ height: 40 }} />
 
               <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
                 transition={{ delay: 0.4 }}
                 onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
                 className={`${BUTTON_BASE} ${BUTTON_VARIANTS.primary} relative z-10`}
-                style={{ boxShadow: '0 8px 30px rgba(124,106,247,0.4)' }}>
+                style={PRIMARY_STYLE}>
                 Start Playing
                 <span aria-hidden="true">→</span>
               </motion.button>
 
+              <div aria-hidden="true" style={{ height: 48 }} />
+
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="flex gap-10 mt-12 relative z-10">
+                className="relative z-10" style={{ display: 'flex', gap: 32 }}>
                 <div className="text-center">
-                  <div className="text-xl font-extrabold text-purple-200">{LEVELS.length}</div>
-                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Levels</div>
+                  <div className="font-extrabold" style={{ fontSize: 22, color: '#d8d4fb' }}>{LEVELS.length}</div>
+                  <div className="uppercase" style={{ fontSize: 11, color: '#5c5c70', letterSpacing: '0.08em', marginTop: 2 }}>Levels</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-extrabold text-purple-200">3</div>
-                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Difficulties</div>
+                  <div className="font-extrabold" style={{ fontSize: 22, color: '#d8d4fb' }}>3</div>
+                  <div className="uppercase" style={{ fontSize: 11, color: '#5c5c70', letterSpacing: '0.08em', marginTop: 2 }}>Difficulties</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-extrabold text-purple-200">100%</div>
-                  <div className="text-[11px] text-gray-600 uppercase tracking-widest mt-0.5">Precision scoring</div>
+                  <div className="font-extrabold" style={{ fontSize: 22, color: '#d8d4fb' }}>100%</div>
+                  <div className="uppercase" style={{ fontSize: 11, color: '#5c5c70', letterSpacing: '0.08em', marginTop: 2 }}>Precision scoring</div>
                 </div>
               </motion.div>
             </motion.div>
