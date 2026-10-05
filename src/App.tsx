@@ -17,10 +17,13 @@ const fade = {
   exit:    { opacity: 0, transition: { duration: 0.2 } },
 }
 
-const DIFFICULTY_STYLES: Record<string, string> = {
-  easy:   'bg-emerald-500/15 text-emerald-400',
-  medium: 'bg-amber-500/15 text-amber-400',
-  hard:   'bg-rose-500/15 text-rose-400',
+// Exact literal values copied from redesign-mockup.html's <style> block — not
+// re-derived, not estimated from a screenshot. Every color/size below is a
+// 1:1 copy of that file's .diff-tag / .card rules.
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy:   '#34d399',
+  medium: '#fbbf24',
+  hard:   '#f87171',
 }
 
 export default function App() {
@@ -110,28 +113,29 @@ export default function App() {
           )}
 
           {state.screen === 'levelSelect' && (
-            <motion.div key="levelSelect" {...fade} className="min-h-screen px-6 sm:px-10 xl:px-16 py-14">
-              {/* Widened from max-w-5xl (1024px) — on real laptop/desktop screens that left
-                  roughly half the viewport as dead empty space to the right. max-w-[1600px]
-                  scales the layout up to genuinely fill wide screens while the grid below
-                  gains extra column breakpoints so it doesn't just stretch existing cards. */}
-              <div className="max-w-[1600px] mx-auto">
+            <motion.div key="levelSelect" {...fade}
+              style={{ minHeight: '100vh', padding: '40px 0', borderBottom: '4px dashed #1c1c2a', boxSizing: 'border-box' }}
+            >
+              <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 40px', boxSizing: 'border-box' }}>
 
-                <div className="flex items-center justify-between mb-10">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
                   <div>
-                    <h2 className="text-3xl font-extrabold tracking-tight mb-1.5">Choose a Level</h2>
-                    <p className="text-gray-500 text-sm">{LEVELS.length} challenges · easy to hard</p>
+                    <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4, color: '#f0f0f8' }}>Choose a Level</h2>
+                    <p style={{ color: '#6a6a7e', fontSize: 13 }}>{LEVELS.length} challenges · easy to hard</p>
                   </div>
                   <button onClick={() => dispatch({ type: 'GO_HOME' })}
-                    className="text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors px-4 py-2 rounded-lg hover:bg-white/[0.04]">
+                    style={{
+                      color: '#6a6a7e', fontSize: 13, padding: '8px 14px', borderRadius: 8,
+                      background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#a0a0b4' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
+                  >
                     ← Home
                   </button>
                 </div>
 
-                {/* only renders once the player has completed at least one level */}
-                <div className="mb-8">
-                  <ProgressStats />
-                </div>
+                <ProgressStats />
 
                 <LevelGrid dispatch={dispatch} />
               </div>
@@ -202,12 +206,6 @@ const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string }[] = [
   { value: 'hard',   label: 'Hard' },
 ]
 
-const DIFFICULTY_ACCENT: Record<string, string> = {
-  easy:   'before:bg-emerald-400',
-  medium: 'before:bg-amber-400',
-  hard:   'before:bg-rose-400',
-}
-
 function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
   const [query, setQuery]         = useState('')
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all')
@@ -220,78 +218,105 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <div className="relative flex-1 max-w-sm">
+      {/* .toolbar / .search / .pills — literal copy of redesign-mockup.html */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search levels…"
             aria-label="Search levels by name"
-            className="w-full text-sm bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-3 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 transition-colors"
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: '#12121c', border: '1px solid #1e1e2c', borderRadius: 10,
+              padding: '10px 14px 10px 36px', fontSize: 13, color: '#f0f0f8',
+              fontFamily: 'inherit', outline: 'none',
+            }}
           />
-          <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <span aria-hidden="true" style={{
+            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+            color: '#4a4a5c', fontSize: 13, pointerEvents: 'none',
+          }}>
+            ⌕
+          </span>
         </div>
 
-        <div className="flex gap-2" role="group" aria-label="Filter by difficulty">
-          {DIFFICULTY_FILTERS.map(f => (
-            <button
-              key={f.value}
-              onClick={() => setDifficulty(f.value)}
-              aria-pressed={difficulty === f.value}
-              className={`text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors ${
-                difficulty === f.value
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:bg-white/[0.07]'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 6 }} role="group" aria-label="Filter by difficulty">
+          {DIFFICULTY_FILTERS.map(f => {
+            const active = difficulty === f.value
+            return (
+              <button
+                key={f.value}
+                onClick={() => setDifficulty(f.value)}
+                aria-pressed={active}
+                style={{
+                  padding: '9px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                  background: active ? '#7c6af7' : '#12121c',
+                  color: active ? '#ffffff' : '#6a6a7e',
+                  border: `1px solid ${active ? '#7c6af7' : '#1e1e2c'}`,
+                }}
+              >
+                {f.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-600 text-sm">
+        <div style={{ textAlign: 'center', padding: '64px 0', color: '#6a6a7e', fontSize: 13 }}>
           No levels match "{query}"{difficulty !== 'all' ? ` in ${difficulty}` : ''}.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        // .grid — literal copy: display:grid; grid-template-columns:repeat(4,1fr); gap:14px
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           {filtered.map((level, i) => {
             const completed = localStorage.getItem(`completed_${level.id}`) === 'true'
             const best = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
+            const accent = DIFFICULTY_COLORS[level.difficulty]
             return (
               <motion.button key={level.id}
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -2 }}
                 transition={{ delay: Math.min(i, 12) * 0.03 }}
                 onClick={() => dispatch({ type: 'START_LEVEL', levelId: level.id })}
-                className={`relative overflow-hidden text-left p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/40 transition-all group before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[3px] ${DIFFICULTY_ACCENT[level.difficulty]}`}
+                style={{
+                  position: 'relative', overflow: 'hidden', textAlign: 'left',
+                  background: '#12121c', border: '1px solid #1e1e2c', borderRadius: 14,
+                  padding: 18, cursor: 'pointer', fontFamily: 'inherit',
+                }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <span className="text-2xl font-black text-white/20 font-mono tracking-tight">
+                {/* .card::before left accent bar */}
+                <span aria-hidden="true" style={{
+                  position: 'absolute', top: 0, left: 0, bottom: 0, width: 3, background: accent,
+                }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 800, color: '#2c2c3c' }}>
                     {String(level.id).padStart(2, '0')}
                   </span>
                   {completed && (
-                    <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold">
+                    <span style={{
+                      fontSize: 9, background: 'rgba(52,211,153,0.15)', color: '#34d399',
+                      padding: '3px 8px', borderRadius: 999, fontWeight: 700,
+                    }}>
                       ✓ Done
                     </span>
                   )}
                 </div>
 
-                <div className="font-semibold text-sm text-white mb-3 leading-snug group-hover:text-purple-300 transition-colors">
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: '#f0f0f8' }}>
                   {level.title}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${DIFFICULTY_STYLES[level.difficulty]}`}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 9, textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em', color: accent }}>
                     {level.difficulty}
                   </span>
                   {best > 0 && (
-                    <span className="text-[11px] text-gray-600 font-mono">
+                    <span style={{ fontSize: 10, color: '#52526a', fontFamily: 'monospace' }}>
                       {best}%
                     </span>
                   )}
