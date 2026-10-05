@@ -6,30 +6,39 @@ import { motion } from 'framer-motion'
 import { LEVELS } from '../data/levels'
 
 interface StatCardProps {
-  icon:      string
-  iconBg:    string
-  label:     string
-  value:     string | number
-  valueColor?: string
-  delay?:    number
+  icon:    string
+  iconBg:  string
+  label:   string
+  value:   string | number
+  delay?:  number
 }
 
-function StatCard({ icon, iconBg, label, value, valueColor = 'text-white', delay = 0 }: StatCardProps) {
+function StatCard({ icon, iconBg, label, value, delay = 0 }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4 }}
-      className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-4 flex items-center gap-3"
+      style={{
+        background: '#12121c', border: '1px solid #1e1e2c', borderRadius: 14,
+        padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12,
+        minWidth: 0,
+      }}
     >
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${iconBg}`} aria-hidden="true">
+      <div aria-hidden="true" style={{
+        width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', fontSize: 16, flexShrink: 0, background: iconBg,
+      }}>
         {icon}
       </div>
-      <div className="min-w-0">
-        <div className={`text-lg font-extrabold font-mono leading-tight truncate ${valueColor}`}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontSize: 19, fontWeight: 800, lineHeight: 1.1, color: '#f0f0f8',
+          fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
           {value}
         </div>
-        <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-widest">
+        <div style={{ fontSize: 10, color: '#62627a', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>
           {label}
         </div>
       </div>
@@ -65,40 +74,34 @@ export default function ProgressStats() {
     return { completed: completed.length, streak, avgScore, bestScore }
   }, [])
 
-  if (stats.completed === 0) return null
-
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 32 }}>
       <StatCard
         icon="✓"
-        iconBg="bg-purple-500/15"
+        iconBg="rgba(124,106,247,0.15)"
         label="Completed"
         value={`${stats.completed} / ${LEVELS.length}`}
-        valueColor="text-purple-300"
         delay={0}
       />
       <StatCard
         icon="🔥"
-        iconBg="bg-amber-500/15"
+        iconBg="rgba(251,191,36,0.15)"
         label="Win streak"
         value={stats.streak}
-        valueColor={stats.streak >= 3 ? 'text-amber-300' : 'text-white'}
         delay={0.05}
       />
       <StatCard
         icon="◎"
-        iconBg="bg-emerald-500/15"
+        iconBg="rgba(52,211,153,0.15)"
         label="Avg score"
         value={`${stats.avgScore}%`}
-        valueColor={stats.avgScore >= 90 ? 'text-emerald-300' : 'text-yellow-300'}
         delay={0.1}
       />
       <StatCard
         icon="★"
-        iconBg="bg-pink-500/15"
+        iconBg="rgba(244,114,182,0.15)"
         label="Best score"
         value={`${stats.bestScore}%`}
-        valueColor="text-pink-300"
         delay={0.15}
       />
     </div>
