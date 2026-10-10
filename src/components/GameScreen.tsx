@@ -17,6 +17,7 @@ const PREVIEW_W  = 400
 const PREVIEW_H  = 300
 const SCORE_DELAY = 600
 
+// exact literal copy of the mockup's .diff-chip colors — same values used
 // on the Level Select cards, kept consistent app-wide
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy:   '#34d399',
@@ -52,14 +53,8 @@ async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElem
       scale: 1,
     })
 
-    // if the canvas is completely blank the render failed — return null so
-    // we don't report a false 100% match on two empty canvases
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return null
-    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-    let sum = 0
-    for (let i = 0; i < data.length; i += 4) sum += data[i] + data[i + 1] + data[i + 2]
-    return sum === 0 ? null : canvas
+    if (!canvas.getContext('2d')) return null
+    return canvas
   } catch {
     // an unreadable/failed render — treat as a failed capture rather than crash
     return null
@@ -92,7 +87,6 @@ function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatc
   )
 }
 
-// ---- precision bar — exact copy of the mockup's .precision / .precision-fill ----
 function PrecisionBar({ score, target, hasInput }: { score: number; target: number; hasInput: boolean }) {
   const passed = score >= target
   const color  = passed ? '#34d399' : target - score <= 20 ? '#fbbf24' : '#7c6af7'
@@ -192,9 +186,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     ])
 
     isScoring.current = false
-    if (!tCanvas || !uCanvas) return
 
-    const score = compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H)
+    const score = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H) : 0
     dispatch({ type: 'UPDATE_SCORE', score })
   }, [dispatch])
 
@@ -232,7 +225,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H) : 0
     dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
   }, [isSubmitting, state.userCSS, dispatch])
-
+  
   const resetEditor = useCallback(() => {
     const view = editorView.current
     if (!view) return
@@ -250,6 +243,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
         return
       }
       if (e.key === 'Escape') {
+        // if the shortcuts panel is open, Escape closes that first rather
+        // than also navigating away in the same keypress
         if (showShortcuts) {
           setShowShortcuts(false)
           return
@@ -258,6 +253,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
         return
       }
       if (e.key === '?') {
+        // '?' is a valid character inside CSS (e.g. attribute selectors,
+        // comments) — don't hijack it while the player is actively typing
         const target = e.target as HTMLElement | null
         if (target?.closest('.cm-content')) return
         e.preventDefault()
