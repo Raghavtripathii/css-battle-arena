@@ -9,12 +9,20 @@ import { motion } from 'framer-motion'
 import type { GameState, GameAction, Level } from '../types'
 import { LEVELS } from '../data/levels'
 import { compareCanvases } from '../lib/scoring'
+import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE } from './buttonStyles'
 
 import html2canvas from 'html2canvas'
 
 const PREVIEW_W  = 400
 const PREVIEW_H  = 300
 const SCORE_DELAY = 600
+
+// on the Level Select cards, kept consistent app-wide
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy:   '#34d399',
+  medium: '#fbbf24',
+  hard:   '#f87171',
+}
 
 function buildDoc(html: string, userCSS: string): string {
   return `<!DOCTYPE html>
@@ -66,34 +74,46 @@ function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatc
 
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
-  const isLow = seconds <= 30
+  const danger = seconds <= 20
+  const warn   = !danger && seconds <= 60
+  const color  = danger ? '#f87171' : warn ? '#fbbf24' : '#f0f0f8'
 
   return (
-    <span className={`font-mono text-sm font-bold tabular-nums ${isLow ? 'text-red-400 animate-pulse' : 'text-gray-400'}`}>
-      {mins}:{secs.toString().padStart(2, '0')}
-    </span>
+    <motion.span
+      animate={danger ? { opacity: [1, 0.5, 1] } : { opacity: 1 }}
+      transition={danger ? { duration: 1, repeat: Infinity } : undefined}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color,
+      }}
+    >
+      ⏱ {mins}:{secs.toString().padStart(2, '0')}
+    </motion.span>
   )
 }
 
-function ScoreBar({ score, target, hasInput }: { score: number; target: number; hasInput: boolean }) {
+// ---- precision bar — exact copy of the mockup's .precision / .precision-fill ----
+function PrecisionBar({ score, target, hasInput }: { score: number; target: number; hasInput: boolean }) {
   const passed = score >= target
-  const color  = passed ? '#34d399' : score >= 70 ? '#fbbf24' : '#7c6af7'
+  const color  = passed ? '#34d399' : target - score <= 20 ? '#fbbf24' : '#7c6af7'
+  const fillWidth = hasInput ? Math.min(100, Math.max(0, score)) : 0
 
   return (
-    <div className="flex-shrink-0 h-10 flex items-center px-5 border-t border-white/[0.06] bg-[#0d0d12] gap-4">
-      <div className="flex-1 h-2 bg-white/[0.06] rounded-full overflow-hidden">
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 10, width: 220, flexShrink: 0 }}
+      aria-label={`Match score ${hasInput ? score : 0}%, pass at ${target}%`}
+      title={`Match score ${hasInput ? score : 0}% — pass at ${target}%`}
+    >
+      <div style={{ position: 'relative', flex: 1, height: 6, borderRadius: 999, background: '#16161f' }}>
         <motion.div
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-          animate={{ width: hasInput ? `${score}%` : '0%' }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 999, background: color }}
+          animate={{ width: `${fillWidth}%` }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         />
+        <div aria-hidden="true" style={{ position: 'absolute', top: -3, bottom: -3, width: 2, background: '#4a4a5c', left: `${target}%` }} />
       </div>
-      <span className="font-mono text-xs font-bold w-11 text-right tabular-nums" style={{ color: hasInput ? color : '#374151' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: hasInput ? color : '#52526a', width: 40, textAlign: 'right' }}>
         {hasInput ? `${score}%` : '—'}
-      </span>
-      <span className="text-[10px] text-gray-700 shrink-0">
-        pass at {target}%
       </span>
     </div>
   )
@@ -108,12 +128,16 @@ export default function GameScreen({ state, dispatch }: Props) {
   const level = LEVELS.find(l => l.id === state.currentLevelId)
   if (!level) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] text-center px-6">
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#050508', color: '#f0f0f8', textAlign: 'center', padding: '0 24px',
+      }}>
         <div>
-          <p className="text-gray-400 mb-4">That level couldn't be found.</p>
+          <p style={{ color: '#8a8a9c', marginBottom: 16 }}>That level couldn't be found.</p>
           <button
             onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
+            className={`${BUTTON_BASE} ${BUTTON_VARIANTS.primary}`}
+            style={PRIMARY_STYLE}
           >
             Back to levels
           </button>
@@ -136,6 +160,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   const isScoring    = useRef(false)
 
   const hasInput = state.userCSS.trim().length >= 10
+  const diffColor = DIFFICULTY_COLORS[level.difficulty]
 
   // target only needs to load once
   useEffect(() => {
@@ -208,6 +233,15 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
   }, [isSubmitting, state.userCSS, dispatch])
 
+  const resetEditor = useCallback(() => {
+    const view = editorView.current
+    if (!view) return
+    const { doc } = view.state
+    if (doc.length === 0) return
+    view.dispatch({ changes: { from: 0, to: doc.length, insert: '' } })
+    view.focus()
+  }, [])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -257,7 +291,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
             '&': {
               height: '100%',
               fontSize: '13px',
-              backgroundColor: '#0d0d12',
+              backgroundColor: '#050508',
             },
             '.cm-content': {
               fontFamily: "'JetBrains Mono', monospace",
@@ -266,8 +300,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
             },
             '.cm-line': { padding: '0 4px' },
             '.cm-gutters': {
-              backgroundColor: '#0d0d12',
-              borderRight: '1px solid rgba(255,255,255,0.06)',
+              backgroundColor: '#050508',
+              borderRight: '1px solid #1a1a26',
               color: '#3f3f50',
             },
             '.cm-activeLineGutter': { backgroundColor: 'rgba(124,106,247,0.07)' },
@@ -291,97 +325,130 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   }, [])
 
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0f] overflow-hidden">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050508', overflow: 'hidden' }}>
 
-      <header className="flex items-center gap-4 px-5 h-14 border-b border-white/[0.06] bg-[#0d0d12] flex-shrink-0">
+      {/* top bar — literal copy of the mockup's .topbar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 20, padding: '14px 24px',
+        borderBottom: '1px solid #1a1a26', flexShrink: 0, background: '#08080c',
+      }}>
         <button
           onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
-          className="text-gray-600 hover:text-gray-300 text-xs font-medium transition-colors shrink-0 px-2 py-1 rounded-md hover:bg-white/[0.05]"
+          style={{
+            color: '#6a6a7e', fontSize: 13, fontWeight: 500, flexShrink: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#a0a0b4' }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
         >
           ← Levels
         </button>
 
-        <div className="w-px h-5 bg-white/[0.08] shrink-0" />
+        <div aria-hidden="true" style={{ width: 1, height: 24, background: '#1e1e2c', flexShrink: 0 }} />
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <span className="font-semibold text-sm text-white">{level.title}</span>
-          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-            level.difficulty === 'easy'   ? 'bg-green-500/15 text-green-400' :
-            level.difficulty === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
-                                            'bg-red-500/15 text-red-400'
-          }`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <h1 style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f8' }}>{level.title}</h1>
+          <span style={{
+            fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+            padding: '3px 8px', borderRadius: 999,
+            background: `${diffColor}26`, color: diffColor,
+          }}>
             {level.difficulty}
           </span>
         </div>
 
-        <span className="text-xs text-gray-700 truncate hidden md:block flex-1">
+        <div style={{
+          fontSize: 13, color: '#6a6a7e', overflow: 'hidden', textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap', flex: 1, minWidth: 40,
+        }}>
           {level.description}
-        </span>
+        </div>
 
-        <div className="flex items-center gap-2.5 ml-auto shrink-0">
-          <div className="px-2.5 py-1 rounded-lg bg-white/[0.04]">
-            <Timer seconds={state.timeLeft} dispatch={dispatch} />
-          </div>
+        <PrecisionBar score={state.score} target={level.pointsToWin} hasInput={hasInput} />
 
-          <button
-            onClick={handleSubmit}
-            disabled={!hasInput || isSubmitting}
-            className="text-[11px] font-semibold px-4 py-1.5 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-          >
-            {isSubmitting ? 'Scoring…' : 'Submit ↵'}
-          </button>
+        <div style={{ flexShrink: 0 }}>
+          <Timer seconds={state.timeLeft} dispatch={dispatch} />
         </div>
-      </header>
 
-      <div className="flex border-b border-white/[0.05] bg-[#0d0d12] flex-shrink-0">
-        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest md:w-[42%]">
-          Your CSS
-        </div>
-        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]">
-          Target
-        </div>
-        <div className="px-4 py-1.5 text-[10px] font-bold text-gray-700 uppercase tracking-widest border-l border-white/[0.05] md:w-[29%]">
-          Yours
-        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={!hasInput || isSubmitting}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '10px 22px', fontSize: 13, fontWeight: 600, borderRadius: 999,
+            background: 'linear-gradient(135deg, #7c6af7, #6355d6)', color: 'white',
+            boxShadow: '0 4px 18px rgba(124,106,247,0.3)', flexShrink: 0,
+            border: 'none', cursor: (!hasInput || isSubmitting) ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit', opacity: (!hasInput || isSubmitting) ? 0.4 : 1,
+          }}
+        >
+          {isSubmitting ? 'Scoring…' : 'Submit'}
+          <kbd style={{ fontSize: 10, opacity: 0.7, fontFamily: 'inherit' }}>⌘⏎</kbd>
+        </button>
       </div>
 
-      {/* 3 columns — stacked on mobile, side by side on desktop */}
-      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+      {/* workspace — literal copy of the mockup's equal-thirds .workspace grid */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', overflow: 'hidden' }}>
 
         {/* col 1 — editor */}
-        <div className="border-r border-white/[0.06] md:w-[42%] h-1/3 md:h-auto">
-          <div ref={editorRef} className="h-full overflow-hidden" />
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0,
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8a8a9c' }}>style.css</span>
+            <button
+              onClick={resetEditor}
+              style={{
+                fontSize: 11, color: '#52526a', background: 'transparent', border: 'none',
+                cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#9a9ab0' }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#52526a' }}
+            >
+              Reset
+            </button>
+          </div>
+          <div ref={editorRef} style={{ flex: 1, overflow: 'hidden' }} />
         </div>
 
         {/* col 2 — target */}
-        <div className="border-r border-white/[0.06] md:w-[29%] h-1/3 md:h-auto bg-[#0d0d12] flex items-center justify-center">
-          <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
-            <iframe
-              ref={targetIframe}
-              title="Target"
-              sandbox="allow-same-origin"
-              scrolling="no"
-              style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8a8a9c' }}>Target</span>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10' }}>
+            <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
+              <iframe
+                ref={targetIframe}
+                title="Target"
+                sandbox="allow-same-origin"
+                scrolling="no"
+                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
+              />
+            </div>
           </div>
         </div>
 
         {/* col 3 — yours */}
-        <div className="md:w-[29%] h-1/3 md:h-auto bg-[#0d0d12] flex items-center justify-center">
-          <div className="relative" style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
-            <iframe
-              ref={userIframe}
-              title="Yours"
-              sandbox="allow-same-origin"
-              scrolling="no"
-              style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#8a8a9c' }}>Yours</span>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10' }}>
+            <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
+              <iframe
+                ref={userIframe}
+                title="Yours"
+                sandbox="allow-same-origin"
+                scrolling="no"
+                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
+              />
+            </div>
           </div>
         </div>
 
       </div>
-
-      <ScoreBar score={state.score} target={level.pointsToWin} hasInput={hasInput} />
 
       <button
         onClick={() => setShowShortcuts(true)}
