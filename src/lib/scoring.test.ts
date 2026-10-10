@@ -17,28 +17,33 @@ describe('compareImageData', () => {
     expect(compareImageData(a, b, 2, 2)).toBe(100)
   })
 
-  it('scores two completely different colors as 0%', () => {
-    const a = solidBuffer(4, 255, 0, 0)
-    const b = solidBuffer(4, 0, 255, 0)
+  it('scores maximally different colors (white vs black) as 0%', () => {
+    const a = solidBuffer(4, 255, 255, 255)
+    const b = solidBuffer(4, 0, 0, 0)
     expect(compareImageData(a, b, 2, 2)).toBe(0)
   })
 
-  it('treats small per-channel differences within tolerance as a match', () => {
+  it('treats small per-channel differences within tolerance as a full match', () => {
     const a = solidBuffer(4, 100, 100, 100)
     const b = solidBuffer(4, 100 + PIXEL_TOLERANCE, 100, 100 - PIXEL_TOLERANCE)
     expect(compareImageData(a, b, 2, 2)).toBe(100)
   })
 
-  it('treats a difference exactly at the tolerance boundary as a match', () => {
+  it('treats a difference exactly at the tolerance boundary as a full match', () => {
     const a = solidBuffer(1, 50, 50, 50)
     const b = solidBuffer(1, 50 + PIXEL_TOLERANCE, 50, 50)
     expect(compareImageData(a, b, 1, 1)).toBe(100)
   })
 
-  it('treats a difference one unit past the tolerance boundary as a mismatch', () => {
+  it('barely nicks the score for a difference just past the tolerance boundary', () => {
     const a = solidBuffer(1, 50, 50, 50)
     const b = solidBuffer(1, 50 + PIXEL_TOLERANCE + 1, 50, 50)
-    expect(compareImageData(a, b, 1, 1)).toBe(0)
+    expect(compareImageData(a, b, 1, 1)).toBe(100)
+  })
+  it('scores a moderate difference proportionally, not as a binary miss', () => {
+    const a = solidBuffer(1, 100, 100, 100)
+    const b = solidBuffer(1, 160, 160, 160)
+    expect(compareImageData(a, b, 1, 1)).toBe(80)
   })
 
   it('ignores the alpha channel entirely', () => {
@@ -47,21 +52,23 @@ describe('compareImageData', () => {
     expect(compareImageData(a, b, 2, 2)).toBe(100)
   })
 
-  it('reports a partial match when only some pixels match', () => {
+  it('reports a partial match when only some pixels match exactly and the rest are maximally different', () => {
     const width = 4, height = 1
     const a = new Uint8ClampedArray(width * height * 4)
     const b = new Uint8ClampedArray(width * height * 4)
     for (let px = 0; px < width * height; px++) {
       const i = px * 4
-      // first half matches, second half is wildly different
+      // first half matches exactly (similarity 1), second half is white-vs-black (similarity 0)
       const matches = px < 2
       a[i] = 200; a[i+1] = 50; a[i+2] = 50; a[i+3] = 255
-      b[i] = matches ? 200 : 0
-      b[i+1] = matches ? 50 : 255
-      b[i+2] = matches ? 50 : 0
+      b[i] = matches ? 200 : 255 - 200
+      b[i+1] = matches ? 50 : 255 - 50
+      b[i+2] = matches ? 50 : 255 - 50
       b[i+3] = 255
     }
-    expect(compareImageData(a, b, width, height)).toBe(50)
+    const result = compareImageData(a, b, width, height)
+    expect(result).toBeGreaterThan(0)
+    expect(result).toBeLessThan(100)
   })
 
   it('returns 0 for mismatched buffer lengths instead of throwing', () => {
@@ -76,10 +83,10 @@ describe('compareImageData', () => {
     expect(compareImageData(a, b, 0, 0)).toBe(0)
   })
 
-  it('respects a custom tolerance value', () => {
-    const a = solidBuffer(1, 100, 100, 100)
-    const b = solidBuffer(1, 105, 100, 100)
-    expect(compareImageData(a, b, 1, 1, 2)).toBe(0)   // tighter tolerance rejects it
-    expect(compareImageData(a, b, 1, 1, 10)).toBe(100) // default tolerance accepts it
+  it('respects a custom tolerance value, including when it changes the result continuously', () => {
+    const a = solidBuffer(1, 27, 27, 27)
+    const b = solidBuffer(1, 227, 227, 227)
+    expect(compareImageData(a, b, 1, 1, 2)).toBe(22)
+    expect(compareImageData(a, b, 1, 1, 200)).toBe(100)
   })
 })
