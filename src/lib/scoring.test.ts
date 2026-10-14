@@ -34,7 +34,6 @@ describe('compareImageData', () => {
     const b = solidBuffer(1, 50 + PIXEL_TOLERANCE, 50, 50)
     expect(compareImageData(a, b, 1, 1)).toBe(100)
   })
-
   it('barely nicks the score for a difference just past the tolerance boundary', () => {
     const a = solidBuffer(1, 50, 50, 50)
     const b = solidBuffer(1, 50 + PIXEL_TOLERANCE + 1, 50, 50)
@@ -46,9 +45,21 @@ describe('compareImageData', () => {
     expect(compareImageData(a, b, 1, 1)).toBe(80)
   })
 
-  it('ignores the alpha channel entirely', () => {
+  it('ignores minor alpha differences between two pixels that are both clearly painted', () => {
     const a = solidBuffer(4, 10, 20, 30, 255)
-    const b = solidBuffer(4, 10, 20, 30, 0)
+    const b = solidBuffer(4, 10, 20, 30, 230) // still well above the visibility threshold
+    expect(compareImageData(a, b, 2, 2)).toBe(100)
+  })
+
+  it('scores a transparent (unrendered) pixel against a painted dark pixel as a real mismatch', () => {
+    const a = solidBuffer(1, 0, 0, 0, 0)       // nothing drawn — fully transparent
+    const b = solidBuffer(1, 26, 26, 46, 255)  // painted dark navy, e.g. a target's background
+    expect(compareImageData(a, b, 1, 1)).toBe(0)
+  })
+
+  it('treats two pixels where nothing is drawn on either side as a match, regardless of underlying RGB', () => {
+    const a = solidBuffer(4, 10, 10, 10, 0)
+    const b = solidBuffer(4, 200, 200, 200, 0)
     expect(compareImageData(a, b, 2, 2)).toBe(100)
   })
 
@@ -66,6 +77,8 @@ describe('compareImageData', () => {
       b[i+2] = matches ? 50 : 255 - 50
       b[i+3] = 255
     }
+    // not maximally opposite per channel, so just check it lands strictly
+    // between the two extremes rather than asserting an exact figure here
     const result = compareImageData(a, b, width, height)
     expect(result).toBeGreaterThan(0)
     expect(result).toBeLessThan(100)
