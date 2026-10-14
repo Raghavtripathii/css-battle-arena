@@ -1,4 +1,5 @@
 export const PIXEL_TOLERANCE = 10
+const ALPHA_VISIBLE_THRESHOLD = 16
 
 function pixelSimilarity(channelDiff: number, tolerance: number): number {
   if (channelDiff <= tolerance) return 1
@@ -20,6 +21,17 @@ export function compareImageData(
 
   let similaritySum = 0
   for (let i = 0; i < a.length; i += 4) {
+    const aPainted = a[i + 3] > ALPHA_VISIBLE_THRESHOLD
+    const bPainted = b[i + 3] > ALPHA_VISIBLE_THRESHOLD
+
+    if (!aPainted && !bPainted) {
+      similaritySum += 1
+      continue
+    }
+    if (aPainted !== bPainted) {
+      continue
+    }
+
     const diff = (
       Math.abs(a[i]     - b[i]) +
       Math.abs(a[i + 1] - b[i + 1]) +
