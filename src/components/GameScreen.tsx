@@ -40,6 +40,27 @@ function buildDoc(html: string, userCSS: string): string {
 <body>${html}</body>
 </html>`
 }
+function waitForIframeLoad(iframe: HTMLIFrameElement, timeoutMs = 1500): Promise<void> {
+  if (iframe.contentDocument?.readyState === 'complete') return Promise.resolve()
+  return new Promise(resolve => {
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      iframe.removeEventListener('load', finish)
+      resolve()
+    }
+    iframe.addEventListener('load', finish)
+    setTimeout(finish, timeoutMs)
+  })
+}
+
+function waitForNextPaint(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+  })
+}
+
 async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElement | null> {
   const doc = iframe.contentDocument
   if (!doc || !doc.body) return null
@@ -52,7 +73,6 @@ async function renderToCanvas(iframe: HTMLIFrameElement): Promise<HTMLCanvasElem
       logging: false,
       scale: 1,
     })
-
     if (!canvas.getContext('2d')) return null
     return canvas
   } catch {
@@ -156,9 +176,13 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   const hasInput = state.userCSS.trim().length >= 10
   const diffColor = DIFFICULTY_COLORS[level.difficulty]
 
+  const targetLoaded = useRef<Promise<void>>(Promise.resolve())
+  const userLoaded   = useRef<Promise<void>>(Promise.resolve())
+
   // target only needs to load once
   useEffect(() => {
     if (targetIframe.current) {
+      targetLoaded.current = waitForIframeLoad(targetIframe.current)
       targetIframe.current.srcdoc = buildDoc(level.html, level.targetCSS)
     }
   }, [level])
@@ -166,6 +190,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   // update user preview on every css change
   useEffect(() => {
     if (userIframe.current) {
+      userLoaded.current = waitForIframeLoad(userIframe.current)
       userIframe.current.srcdoc = buildDoc(level.html, state.userCSS)
     }
   }, [state.userCSS, level.html])
@@ -178,7 +203,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     }
 
     isScoring.current = true
-    await new Promise(r => setTimeout(r, 180))
+    await Promise.all([targetLoaded.current, userLoaded.current])
+    await waitForNextPaint()
 
     const [tCanvas, uCanvas] = await Promise.all([
       renderToCanvas(targetIframe.current!),
@@ -186,7 +212,6 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     ])
 
     isScoring.current = false
-
     const score = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H) : 0
     dispatch({ type: 'UPDATE_SCORE', score })
   }, [dispatch])
@@ -211,8 +236,10 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
 
     setIsSubmitting(true)
 
-    // wait a tick for the iframe to reflect the very latest keystroke, then capture both frames
-    await new Promise(r => setTimeout(r, 180))
+    // same fix as runScore above — wait for the iframes to actually finish
+    // loading and painting the latest keystroke, not a blind guessed delay
+    await Promise.all([targetLoaded.current, userLoaded.current])
+    await waitForNextPaint()
 
     const [tCanvas, uCanvas] = await Promise.all([
       renderToCanvas(targetIframe.current!),
@@ -225,7 +252,6 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
     const finalScore = (tCanvas && uCanvas) ? compareCanvases(tCanvas, uCanvas, PREVIEW_W, PREVIEW_H) : 0
     dispatch({ type: 'SUBMIT_RESULT', score: finalScore })
   }, [isSubmitting, state.userCSS, dispatch])
-  
   const resetEditor = useCallback(() => {
     const view = editorView.current
     if (!view) return
