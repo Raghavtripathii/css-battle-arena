@@ -275,6 +275,8 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
           setShowShortcuts(false)
           return
         }
+        const target = e.target as HTMLElement | null
+        if (target?.closest('.cm-content')) return
         dispatch({ type: 'GO_LEVEL_SELECT' })
         return
       }
