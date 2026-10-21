@@ -1529,4 +1529,154 @@ export const LEVELS: Level[] = [
       'The cover art is a plain gradient square — no image needed to sell the effect.',
     ],
   },
+  {
+    id: 36,
+    title: 'Badge Row',
+    difficulty: 'easy',
+    description: 'Three status badges in a row, each with its own color.',
+    timeLimit: 110,
+    pointsToWin: 85,
+    html: `<div class="container"><div class="badges"><div class="badge success">Active</div><div class="badge warning">Pending</div><div class="badge danger">Failed</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #101018;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .badges {
+        display: flex;
+        gap: 10px;
+      }
+      .badge {
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .success {
+        background: rgba(52,211,153,0.15);
+        color: #34d399;
+      }
+      .warning {
+        background: rgba(251,191,36,0.15);
+        color: #fbbf24;
+      }
+      .danger {
+        background: rgba(248,113,113,0.15);
+        color: #f87171;
+      }
+    `,
+    hints: [
+      'The badges sit in a flex row with a small gap between them.',
+      'Each badge is a pill — border-radius: 999px with 6px/14px padding.',
+      'Every badge\'s text color is the same hue as its background, just at full opacity instead of 15%.',
+    ],
+  },
+  {
+    id: 37,
+    title: 'Breadcrumb Nav',
+    difficulty: 'medium',
+    description: 'A breadcrumb trail with a dimmed path and one active page.',
+    timeLimit: 140,
+    pointsToWin: 82,
+    html: `<div class="container"><div class="crumbs"><span class="crumb">Home</span><span class="sep">/</span><span class="crumb">Projects</span><span class="sep">/</span><span class="crumb active">Settings</span></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #121219;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .crumb {
+        font-size: 13px;
+        color: #8888a0;
+      }
+      .crumb.active {
+        color: white;
+        font-weight: 700;
+      }
+      .sep {
+        color: #44445c;
+        font-size: 12px;
+      }
+    `,
+    hints: [
+      'All five pieces — three crumbs and two separators — sit in one flex row with a small gap.',
+      'Only the last crumb is styled differently: white and bold, since it is the current page.',
+      'The separators are plain, dim text ("/"), not borders or icons.',
+    ],
+  },
+  {
+    id: 38,
+    title: 'Browser Window',
+    difficulty: 'hard',
+    description: 'A mock browser chrome — traffic-light dots, a URL bar, and a content pane.',
+    timeLimit: 200,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="window"><div class="titlebar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="urlbar">https://example.com</div></div><div class="content"></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .window {
+        width: 280px;
+        height: 180px;
+        background: #17172a;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+      }
+      .titlebar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 12px;
+        background: #1f1f33;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .red { background: #f87171; }
+      .yellow { background: #fbbf24; }
+      .green { background: #34d399; }
+      .urlbar {
+        flex: 1;
+        margin-left: 10px;
+        background: #101018;
+        color: #6a6a7e;
+        font-size: 10px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-align: center;
+      }
+      .content {
+        flex: 1;
+        background: #0d0d16;
+      }
+    `,
+    hints: [
+      'The window is a flex column: a fixed-height titlebar on top, then a content pane that fills the rest with flex: 1.',
+      'overflow: hidden on .window is what clips the titlebar\'s square corners to match the window\'s rounded ones.',
+      'The URL bar also uses flex: 1 to fill the remaining titlebar space after the three dots.',
+    ],
+  },
 ]
