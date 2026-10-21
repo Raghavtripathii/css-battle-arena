@@ -145,3 +145,6 @@ The `.container` (or whatever top-level class you use) should size itself to fil
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+## 👤 Author
+
+**Raghvendra Tripathi** ([@Raghavtripathii](https://github.com/Raghavtripathii))
