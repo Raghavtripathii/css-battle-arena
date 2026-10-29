@@ -1679,4 +1679,104 @@ export const LEVELS: Level[] = [
       'The URL bar also uses flex: 1 to fill the remaining titlebar space after the three dots.',
     ],
   },
+    {
+    id: 39,
+    title: 'Terminal Window',
+    difficulty: 'medium',
+    description: 'A dark terminal with a title strip and two lines of green command text.',
+    timeLimit: 150,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="terminal"><div class="bar">terminal</div><div class="body"><div class="line">$ npm run build</div><div class="line ok">✓ build complete</div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .terminal {
+        width: 260px;
+        background: #101018;
+        border: 1px solid #2a2a40;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .bar {
+        background: #1f1f33;
+        color: #8888a0;
+        font-size: 10px;
+        text-align: center;
+        padding: 6px 0;
+      }
+      .body {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .line {
+        color: #d8d4fb;
+      }
+      .ok {
+        color: #34d399;
+      }
+    `,
+    hints: [
+      'The terminal is a fixed 260px-wide box with a 1px border and rounded corners; overflow: hidden keeps the bar inside the curve.',
+      'The title bar is centered text with 6px of vertical padding on a slightly lighter background.',
+      'The body is a flex column with an 8px gap and a monospace font; only the second line is green.',
+    ],
+  },
+  {
+    id: 40,
+    title: 'Chat Bubbles',
+    difficulty: 'medium',
+    description: 'Two chat bubbles — one received on the left, one sent on the right.',
+    timeLimit: 150,
+    pointsToWin: 80,
+    html: `<div class="container"><div class="chat"><div class="bubble them">Hey, are you free?</div><div class="bubble me">Yep, call me!</div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #121219;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chat {
+        width: 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .bubble {
+        max-width: 70%;
+        padding: 10px 14px;
+        font-size: 12px;
+        border-radius: 16px;
+      }
+      .them {
+        align-self: flex-start;
+        background: #26263a;
+        color: #d8d4fb;
+        border-bottom-left-radius: 4px;
+      }
+      .me {
+        align-self: flex-end;
+        background: #7c6af7;
+        color: white;
+        border-bottom-right-radius: 4px;
+      }
+    `,
+    hints: [
+      'The chat is a flex column with a 10px gap; each bubble aligns itself with align-self.',
+      'Both bubbles share 16px rounded corners, but the corner nearest the sender is reduced to 4px.',
+      'Received bubble is dark grey-purple on the left; sent bubble is solid purple on the right.',
+    ],
+  },
 ]
