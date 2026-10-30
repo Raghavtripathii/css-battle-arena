@@ -8,6 +8,7 @@ export interface Level {
   hints:       string[]
   pointsToWin: number        // usually 90
   timeLimit:   number        // in seconds
+  isNew?:      boolean       // shows a NEW badge in the level grid
 }
 
 export type GameScreen =
