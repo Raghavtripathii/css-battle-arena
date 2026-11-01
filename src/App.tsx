@@ -297,6 +297,14 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
                   <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 800, color: '#2c2c3c' }}>
                     {String(level.id).padStart(2, '0')}
                   </span>
+                  {level.isNew && !completed && (
+                    <span style={{
+                      fontSize: 9, background: 'rgba(124,106,247,0.18)', color: '#a78bfa',
+                      padding: '3px 8px', borderRadius: 999, fontWeight: 700, letterSpacing: '0.05em',
+                    }}>
+                      NEW
+                    </span>
+                  )}
                   {completed && (
                     <span style={{
                       fontSize: 9, background: 'rgba(52,211,153,0.15)', color: '#34d399',
