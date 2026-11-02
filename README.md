@@ -10,7 +10,7 @@ Built with React 18, TypeScript, Vite, Tailwind CSS v4, CodeMirror 6, and Framer
 
 ## How it works
 
-35 levels, easy to hard.
+41 levels, easy to hard.
 
 1. Pick a level from the grid — each one shows a piece of fixed HTML markup and a target visual.
 2. Write CSS in the CodeMirror editor to make your `.container` (rendered in a live iframe) match the target.
@@ -122,7 +122,7 @@ Levels are plain data — no code changes needed elsewhere. Add an entry to `LEV
 
 ```ts
 {
-  id: 36,
+  id: 42,
   title: 'Your Level Name',
   difficulty: 'easy' | 'medium' | 'hard',
   description: 'One-line description shown in the header.',
