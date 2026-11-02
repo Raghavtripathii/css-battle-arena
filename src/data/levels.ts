@@ -1679,8 +1679,9 @@ export const LEVELS: Level[] = [
       'The URL bar also uses flex: 1 to fill the remaining titlebar space after the three dots.',
     ],
   },
-    {
+  {
     id: 39,
+    isNew: true,
     title: 'Terminal Window',
     difficulty: 'medium',
     description: 'A dark terminal with a title strip and two lines of green command text.',
@@ -1733,6 +1734,7 @@ export const LEVELS: Level[] = [
   },
   {
     id: 40,
+    isNew: true,
     title: 'Chat Bubbles',
     difficulty: 'medium',
     description: 'Two chat bubbles — one received on the left, one sent on the right.',
@@ -1777,6 +1779,88 @@ export const LEVELS: Level[] = [
       'The chat is a flex column with a 10px gap; each bubble aligns itself with align-self.',
       'Both bubbles share 16px rounded corners, but the corner nearest the sender is reduced to 4px.',
       'Received bubble is dark grey-purple on the left; sent bubble is solid purple on the right.',
+    ],
+  },
+  {
+    id: 41,
+    isNew: true,
+    title: 'Music Player Card',
+    difficulty: 'hard',
+    description: 'A player card with album art, track info, a progress bar, and three control buttons.',
+    timeLimit: 220,
+    pointsToWin: 68,
+    html: `<div class="container"><div class="player"><div class="art"></div><div class="title">Midnight Drive</div><div class="artist">Neon Valley</div><div class="progress"><div class="fill"></div></div><div class="controls"><div class="btn"></div><div class="btn play"></div><div class="btn"></div></div></div></div>`,
+    targetCSS: `
+      .container {
+        width: 400px;
+        height: 300px;
+        background: #0a0a0f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .player {
+        width: 180px;
+        padding: 16px;
+        background: #17172a;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .art {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #7c6af7, #f472b6);
+      }
+      .title {
+        margin-top: 12px;
+        color: #f0f0f8;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .artist {
+        margin-top: 2px;
+        color: #6a6a7e;
+        font-size: 10px;
+      }
+      .progress {
+        width: 100%;
+        height: 4px;
+        margin-top: 14px;
+        background: #26263a;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .fill {
+        width: 40%;
+        height: 100%;
+        background: #7c6af7;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 14px;
+      }
+      .btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #26263a;
+      }
+      .play {
+        width: 34px;
+        height: 34px;
+        background: #7c6af7;
+      }
+    `,
+    hints: [
+      'The player is a flex column with align-items: center, so the art, text and controls are all centered.',
+      'The progress track hides overflow and has a 40%-wide fill inside it; the track is 4px tall with 2px rounded corners.',
+      'Controls are a flex row with a 14px gap — two 22px grey circles around a larger 34px purple one.',
     ],
   },
 ]
