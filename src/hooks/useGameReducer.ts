@@ -1,23 +1,7 @@
-
 import { useReducer } from 'react'
 import type { GameState, GameAction } from '../types'
 import { LEVELS } from '../data/levels'
-
-function safeGet(key: string): string | null {
-  try {
-    return localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSet(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // best-effort only — progress just won't persist this session
-  }
-}
+import { safeGet, safeSet } from '../lib/storage'
 
 const initialState: GameState = {
   screen:         'home',
