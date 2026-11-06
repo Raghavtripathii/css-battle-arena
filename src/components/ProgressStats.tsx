@@ -4,6 +4,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { LEVELS } from '../data/levels'
+import { isLevelCompleted, getPersonalBest } from '../lib/storage'
 
 interface StatCardProps {
   icon:    string
@@ -55,8 +56,8 @@ export default function ProgressStats() {
 
     // streak breaks on first incomplete level
     for (const level of LEVELS) {
-      const isDone = localStorage.getItem(`completed_${level.id}`) === 'true'
-      const best   = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
+      const isDone = isLevelCompleted(level.id)
+      const best   = getPersonalBest(level.id)
       if (isDone) {
         completed.push(level.id)
         if (best > 0) scores.push(best)
