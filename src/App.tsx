@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Button from './components/Button'
 import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE } from './components/buttonStyles'
 import { LEVELS } from './data/levels'
+import { isLevelCompleted, getPersonalBest } from './lib/storage'
 import type { GameAction } from './types'
 
 const fade = {
@@ -273,8 +274,8 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
         // .grid — literal copy: display:grid; grid-template-columns:repeat(4,1fr); gap:14px
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
           {filtered.map((level, i) => {
-            const completed = localStorage.getItem(`completed_${level.id}`) === 'true'
-            const best = parseInt(localStorage.getItem(`personal_best_${level.id}`) ?? '0', 10)
+            const completed = isLevelCompleted(level.id)
+            const best = getPersonalBest(level.id)
             const accent = DIFFICULTY_COLORS[level.difficulty]
             return (
               <motion.button key={level.id}
