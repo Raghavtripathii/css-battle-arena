@@ -14,6 +14,23 @@ export function safeSet(key: string, value: string): void {
   }
 }
 
+export function safeRemove(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // best-effort only
+  }
+}
+
+// wipes completion, personal best, and saved editor code for the given levels
+export function clearAllProgress(levelIds: number[]): void {
+  for (const id of levelIds) {
+    safeRemove(`completed_${id}`)
+    safeRemove(`personal_best_${id}`)
+    safeRemove(`level_code_${id}`)
+  }
+}
+
 export function isLevelCompleted(levelId: number): boolean {
   return safeGet(`completed_${levelId}`) === 'true'
 }
