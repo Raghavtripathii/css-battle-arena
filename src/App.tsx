@@ -7,9 +7,9 @@ import SolutionPanel from './components/SolutionPanel'
 import ProgressStats from './components/ProgressStats'
 import ErrorBoundary from './components/ErrorBoundary'
 import Button from './components/Button'
-import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE } from './components/buttonStyles'
+import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE, SECONDARY_STYLE } from './components/buttonStyles'
 import { LEVELS } from './data/levels'
-import { isLevelCompleted, getPersonalBest } from './lib/storage'
+import { isLevelCompleted, getPersonalBest, clearAllProgress } from './lib/storage'
 import type { GameAction } from './types'
 
 const fade = {
@@ -31,6 +31,15 @@ export default function App() {
   const [state, dispatch] = useGameReducer()
   const currentLevel = LEVELS.find(l => l.id === state.currentLevelId)
   const animatedFailScore = useScoreAnimation(state.score, 700)
+  // bumped after a progress reset so the stats and grid re-read storage
+  const [progressVersion, setProgressVersion] = useState(0)
+
+  const handleResetProgress = () => {
+    const ok = window.confirm('Reset all progress? This clears completed levels, personal bests and saved code.')
+    if (!ok) return
+    clearAllProgress(LEVELS.map(l => l.id))
+    setProgressVersion(v => v + 1)
+  }
 
   return (
     <ErrorBoundary>
@@ -92,6 +101,8 @@ export default function App() {
                 <span aria-hidden="true">→</span>
               </motion.button>
 
+              <ContinueButton dispatch={dispatch} />
+
               <div aria-hidden="true" style={{ height: 48 }} />
 
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -124,21 +135,33 @@ export default function App() {
                     <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4, color: '#f0f0f8' }}>Choose a Level</h2>
                     <p style={{ color: '#6a6a7e', fontSize: 13 }}>{LEVELS.length} challenges · easy to hard</p>
                   </div>
-                  <button onClick={() => dispatch({ type: 'GO_HOME' })}
-                    style={{
-                      color: '#6a6a7e', fontSize: 13, padding: '8px 14px', borderRadius: 8,
-                      background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.color = '#a0a0b4' }}
-                    onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
-                  >
-                    ← Home
-                  </button>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={handleResetProgress}
+                      style={{
+                        color: '#6a6a7e', fontSize: 13, padding: '8px 14px', borderRadius: 8,
+                        background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = '#f87171' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
+                    >
+                      Reset progress
+                    </button>
+                    <button onClick={() => dispatch({ type: 'GO_HOME' })}
+                      style={{
+                        color: '#6a6a7e', fontSize: 13, padding: '8px 14px', borderRadius: 8,
+                        background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = '#a0a0b4' }}
+                      onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
+                    >
+                      ← Home
+                    </button>
+                  </div>
                 </div>
 
-                <ProgressStats />
+                <ProgressStats key={`stats-${progressVersion}`} />
 
-                <LevelGrid dispatch={dispatch} />
+                <LevelGrid key={`grid-${progressVersion}`} dispatch={dispatch} />
               </div>
             </motion.div>
           )}
@@ -195,6 +218,28 @@ export default function App() {
         </AnimatePresence>
       </div>
     </ErrorBoundary>
+  )
+}
+
+function ContinueButton({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
+  const hasProgress = LEVELS.some(l => isLevelCompleted(l.id))
+  const next = LEVELS.find(l => !isLevelCompleted(l.id))
+  // nothing to continue: brand-new player, or every level is already done
+  if (!hasProgress || !next) return null
+
+  return (
+    <>
+      <div aria-hidden="true" style={{ height: 14 }} />
+      <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}
+        transition={{ delay: 0.45 }}
+        onClick={() => dispatch({ type: 'START_LEVEL', levelId: next.id })}
+        className={`${BUTTON_BASE} ${BUTTON_VARIANTS.secondary} relative z-10`}
+        style={SECONDARY_STYLE}>
+        Continue · Level {next.id}
+        <span aria-hidden="true">→</span>
+      </motion.button>
+    </>
   )
 }
 
