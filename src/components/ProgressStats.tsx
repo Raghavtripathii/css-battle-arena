@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { LEVELS } from '../data/levels'
 import { isLevelCompleted, getPersonalBest } from '../lib/storage'
+import { useIsMobile } from '../hooks/useViewport'
 
 interface StatCardProps {
   icon:    string
@@ -12,9 +13,10 @@ interface StatCardProps {
   label:   string
   value:   string | number
   delay?:  number
+  compact?: boolean
 }
 
-function StatCard({ icon, iconBg, label, value, delay = 0 }: StatCardProps) {
+function StatCard({ icon, iconBg, label, value, delay = 0, compact = false }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -22,7 +24,7 @@ function StatCard({ icon, iconBg, label, value, delay = 0 }: StatCardProps) {
       transition={{ delay, duration: 0.4 }}
       style={{
         background: '#12121c', border: '1px solid #1e1e2c', borderRadius: 14,
-        padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12,
+        padding: compact ? '12px 12px' : '16px 18px', display: 'flex', alignItems: 'center', gap: compact ? 10 : 12,
         minWidth: 0,
       }}
     >
@@ -48,6 +50,7 @@ function StatCard({ icon, iconBg, label, value, delay = 0 }: StatCardProps) {
 }
 
 export default function ProgressStats() {
+  const isMobile = useIsMobile()
   const stats = useMemo(() => {
     const completed: number[] = []
     const scores:    number[] = []
@@ -76,13 +79,14 @@ export default function ProgressStats() {
   }, [])
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 32 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 12, marginBottom: isMobile ? 24 : 32 }}>
       <StatCard
         icon="✓"
         iconBg="rgba(124,106,247,0.15)"
         label="Completed"
         value={`${stats.completed} / ${LEVELS.length}`}
         delay={0}
+        compact={isMobile}
       />
       <StatCard
         icon="🔥"
@@ -90,6 +94,7 @@ export default function ProgressStats() {
         label="Win streak"
         value={stats.streak}
         delay={0.05}
+        compact={isMobile}
       />
       <StatCard
         icon="◎"
@@ -97,6 +102,7 @@ export default function ProgressStats() {
         label="Avg score"
         value={`${stats.avgScore}%`}
         delay={0.1}
+        compact={isMobile}
       />
       <StatCard
         icon="★"
@@ -104,6 +110,7 @@ export default function ProgressStats() {
         label="Best score"
         value={`${stats.bestScore}%`}
         delay={0.15}
+        compact={isMobile}
       />
     </div>
   )
