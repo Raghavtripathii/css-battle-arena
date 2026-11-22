@@ -9,6 +9,7 @@ import { motion } from 'framer-motion'
 import type { GameState, GameAction, Level } from '../types'
 import { LEVELS } from '../data/levels'
 import { compareCanvases } from '../lib/scoring'
+import { useViewportWidth, MOBILE_MAX_WIDTH } from '../hooks/useViewport'
 import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE } from './buttonStyles'
 
 import html2canvas from 'html2canvas'
@@ -107,14 +108,16 @@ function Timer({ seconds, dispatch }: { seconds: number; dispatch: React.Dispatc
   )
 }
 
-function PrecisionBar({ score, target, hasInput }: { score: number; target: number; hasInput: boolean }) {
+function PrecisionBar({ score, target, hasInput, mobile = false }: { score: number; target: number; hasInput: boolean; mobile?: boolean }) {
   const passed = score >= target
   const color  = passed ? '#34d399' : target - score <= 20 ? '#fbbf24' : '#7c6af7'
   const fillWidth = hasInput ? Math.min(100, Math.max(0, score)) : 0
 
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 10, width: 220, flexShrink: 0 }}
+      style={mobile
+        ? { display: 'flex', alignItems: 'center', gap: 10, gridColumn: '1 / 3', gridRow: 2, minWidth: 0 }
+        : { display: 'flex', alignItems: 'center', gap: 10, width: 220, flexShrink: 0 }}
       aria-label={`Match score ${hasInput ? score : 0}%, pass at ${target}%`}
       title={`Match score ${hasInput ? score : 0}% — pass at ${target}%`}
     >
@@ -164,6 +167,11 @@ export default function GameScreen({ state, dispatch }: Props) {
 }
 
 function Play({ level, state, dispatch }: Props & { level: Level }) {
+  // phone layout is opt-in by width; wider screens render exactly as before
+  const viewportWidth = useViewportWidth()
+  const isMobile = viewportWidth <= MOBILE_MAX_WIDTH
+  // two previews sit side by side on phones, so scale each to half the screen
+  const mobileScale = Math.min(0.9, Math.max(0.3, (viewportWidth / 2 - 16) / PREVIEW_W))
 
   const editorRef    = useRef<HTMLDivElement>(null)
   const editorView   = useRef<EditorView | null>(null)
@@ -185,7 +193,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
       targetLoaded.current = waitForIframeLoad(targetIframe.current)
       targetIframe.current.srcdoc = buildDoc(level.html, level.targetCSS)
     }
-  }, [level])
+  }, [level, isMobile])
 
   // update user preview on every css change
   useEffect(() => {
@@ -193,7 +201,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
       userLoaded.current = waitForIframeLoad(userIframe.current)
       userIframe.current.srcdoc = buildDoc(level.html, state.userCSS)
     }
-  }, [state.userCSS, level.html])
+  }, [state.userCSS, level.html, isMobile])
 
   const runScore = useCallback(async (cssToScore: string) => {
     if (isScoring.current) return
@@ -303,6 +311,9 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
         extensions: [
           history(),
           lineNumbers(),
+          ...(window.innerWidth <= MOBILE_MAX_WIDTH
+            ? [EditorView.contentAttributes.of({ autocapitalize: 'off', autocorrect: 'off', spellcheck: 'false', autocomplete: 'off' })]
+            : []),
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
           css(),
           oneDark,
@@ -349,49 +360,99 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050508', overflow: 'hidden' }}>
+  const renderPreview = (ref: typeof targetIframe, title: string) => {
+    const frame = (
+      <iframe
+        ref={ref}
+        title={title}
+        sandbox="allow-same-origin"
+        scrolling="no"
+        style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
+      />
+    )
+    if (!isMobile) {
+      return (
+        <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
+          {frame}
+        </div>
+      )
+    }
+    // phones: reserve the real scaled size so nothing overflows the screen
+    return (
+      <div style={{ width: PREVIEW_W * mobileScale, height: PREVIEW_H * mobileScale, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: PREVIEW_W, height: PREVIEW_H, transform: `scale(${mobileScale})`, transformOrigin: 'top left' }}>
+          {frame}
+        </div>
+      </div>
+    )
+  }
 
-      {/* top bar — literal copy of the mockup's .topbar */}
-      <div style={{
+  const topBarStyle: React.CSSProperties = isMobile
+    ? {
+        display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto', alignItems: 'center',
+        gap: '8px 12px', padding: '10px 12px',
+        borderBottom: '1px solid #1a1a26', flexShrink: 0, background: '#08080c',
+        position: 'sticky', top: 0, zIndex: 20,
+      }
+    : {
         display: 'flex', alignItems: 'center', gap: 20, padding: '14px 24px',
         borderBottom: '1px solid #1a1a26', flexShrink: 0, background: '#08080c',
-      }}>
+      }
+
+  return (
+    <div style={isMobile
+      ? { display: 'flex', flexDirection: 'column', height: '100dvh', background: '#050508', overflowY: 'auto', overflowX: 'hidden' }
+      : { display: 'flex', flexDirection: 'column', height: '100vh', background: '#050508', overflow: 'hidden' }}>
+
+      {/* top bar — literal copy of the mockup's .topbar */}
+      <div style={topBarStyle}>
         <button
           onClick={() => dispatch({ type: 'GO_LEVEL_SELECT' })}
+          aria-label="Back to levels"
           style={{
-            color: '#6a6a7e', fontSize: 13, fontWeight: 500, flexShrink: 0,
-            background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+            color: '#6a6a7e', fontSize: isMobile ? 20 : 13, fontWeight: 500, flexShrink: 0,
+            background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            padding: isMobile ? '0 4px' : 0,
+            ...(isMobile ? { gridColumn: 1, gridRow: 1 } : {}),
           }}
           onMouseEnter={e => { e.currentTarget.style.color = '#a0a0b4' }}
           onMouseLeave={e => { e.currentTarget.style.color = '#6a6a7e' }}
         >
-          ← Levels
+          {isMobile ? '←' : '← Levels'}
         </button>
 
-        <div aria-hidden="true" style={{ width: 1, height: 24, background: '#1e1e2c', flexShrink: 0 }} />
+        {!isMobile && (
+          <div aria-hidden="true" style={{ width: 1, height: 24, background: '#1e1e2c', flexShrink: 0 }} />
+        )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <h1 style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f8' }}>{level.title}</h1>
+        <div style={isMobile
+          ? { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, gridColumn: 2, gridRow: 1 }
+          : { display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <h1 style={{
+            fontSize: 15, fontWeight: 700, color: '#f0f0f8',
+            ...(isMobile ? { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 } : {}),
+          }}>{level.title}</h1>
           <span style={{
             fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
-            padding: '3px 8px', borderRadius: 999,
+            padding: '3px 8px', borderRadius: 999, flexShrink: 0,
             background: `${diffColor}26`, color: diffColor,
           }}>
             {level.difficulty}
           </span>
         </div>
 
-        <div style={{
-          fontSize: 13, color: '#6a6a7e', overflow: 'hidden', textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap', flex: 1, minWidth: 40,
-        }}>
+        <div style={isMobile
+          ? { fontSize: 12, color: '#6a6a7e', lineHeight: 1.4, gridColumn: '1 / -1', gridRow: 3 }
+          : {
+              fontSize: 13, color: '#6a6a7e', overflow: 'hidden', textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap', flex: 1, minWidth: 40,
+            }}>
           {level.description}
         </div>
 
-        <PrecisionBar score={state.score} target={level.pointsToWin} hasInput={hasInput} />
+        <PrecisionBar score={state.score} target={level.pointsToWin} hasInput={hasInput} mobile={isMobile} />
 
-        <div style={{ flexShrink: 0 }}>
+        <div style={isMobile ? { flexShrink: 0, gridColumn: 3, gridRow: 1 } : { flexShrink: 0 }}>
           <Timer seconds={state.timeLeft} dispatch={dispatch} />
         </div>
 
@@ -399,8 +460,9 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
           onClick={handleSubmit}
           disabled={!hasInput || isSubmitting}
           style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '10px 22px', fontSize: 13, fontWeight: 600, borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: isMobile ? '10px 20px' : '10px 22px', fontSize: 13, fontWeight: 600, borderRadius: 999,
+            ...(isMobile ? { gridColumn: 3, gridRow: 2 } : {}),
             background: 'linear-gradient(135deg, #7c6af7, #6355d6)', color: 'white',
             boxShadow: '0 4px 18px rgba(124,106,247,0.3)', flexShrink: 0,
             border: 'none', cursor: (!hasInput || isSubmitting) ? 'not-allowed' : 'pointer',
@@ -408,15 +470,19 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
           }}
         >
           {isSubmitting ? 'Scoring…' : 'Submit'}
-          <kbd style={{ fontSize: 10, opacity: 0.7, fontFamily: 'inherit' }}>⌘⏎</kbd>
+          {!isMobile && <kbd style={{ fontSize: 10, opacity: 0.7, fontFamily: 'inherit' }}>⌘⏎</kbd>}
         </button>
       </div>
 
       {/* workspace — literal copy of the mockup's equal-thirds .workspace grid */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', overflow: 'hidden' }}>
+      <div style={isMobile
+        ? { flex: '1 0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', alignContent: 'start' }
+        : { flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', overflow: 'hidden' }}>
 
         {/* col 1 — editor */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26' }}>
+        <div style={isMobile
+          ? { display: 'flex', flexDirection: 'column', gridColumn: '1 / -1', order: 2, height: 'max(240px, 42dvh)', borderTop: '1px solid #1a1a26' }
+          : { display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26' }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0,
@@ -434,47 +500,32 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
               Reset
             </button>
           </div>
-          <div ref={editorRef} style={{ flex: 1, overflow: 'hidden' }} />
+          <div ref={editorRef} style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} />
         </div>
 
         {/* col 2 — target */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26' }}>
-          <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, borderRight: '1px solid #1a1a26', ...(isMobile ? { order: 1 } : {}) }}>
+          <div style={{ padding: isMobile ? '8px 12px' : '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#8a8a9c' }}>Target</span>
           </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10' }}>
-            <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
-              <iframe
-                ref={targetIframe}
-                title="Target"
-                sandbox="allow-same-origin"
-                scrolling="no"
-                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
-              />
-            </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10', ...(isMobile ? { padding: '8px 0' } : {}) }}>
+            {renderPreview(targetIframe, 'Target')}
           </div>
         </div>
 
         {/* col 3 — yours */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, ...(isMobile ? { order: 1 } : {}) }}>
+          <div style={{ padding: isMobile ? '8px 12px' : '10px 16px', borderBottom: '1px solid #1a1a26', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#8a8a9c' }}>Yours</span>
           </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10' }}>
-            <div style={{ transform: 'scale(0.66)', transformOrigin: 'center' }}>
-              <iframe
-                ref={userIframe}
-                title="Yours"
-                sandbox="allow-same-origin"
-                scrolling="no"
-                style={{ width: PREVIEW_W, height: PREVIEW_H, border: 'none', display: 'block', pointerEvents: 'none' }}
-              />
-            </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a10', ...(isMobile ? { padding: '8px 0' } : {}) }}>
+            {renderPreview(userIframe, 'Yours')}
           </div>
         </div>
 
       </div>
 
+      {!isMobile && (
       <button
         onClick={() => setShowShortcuts(true)}
         aria-label="Keyboard shortcuts"
@@ -483,6 +534,7 @@ function Play({ level, state, dispatch }: Props & { level: Level }) {
       >
         ?
       </button>
+      )}
 
       {showShortcuts && (
         <div
