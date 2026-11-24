@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useScoreAnimation } from '../hooks/useScoreAnimation'
 import Confetti from './Confetti'
 import Button from './Button'
+import { useIsMobile } from '../hooks/useViewport'
 
 interface Props {
   targetCSS:    string
@@ -45,7 +46,7 @@ function CodeLine({ line }: { line: DiffLine }) {
 
   let body: React.ReactNode
   if (content === '') {
-    body = ' '
+    body = ' '
   } else if (content === '}') {
     body = <span style={{ color: '#4a4a5c' }}>{'}'}</span>
   } else if (content.endsWith('{')) {
@@ -117,6 +118,7 @@ export default function SolutionPanel({
   onNext,
   onRetry,
 }: Props) {
+  const isMobile = useIsMobile()
   const [showSolution, setShowSolution] = useState(false)
   const animatedScore = useScoreAnimation(score, 900)
   const isPerfect = score === 100
@@ -135,7 +137,7 @@ export default function SolutionPanel({
     <div style={{
       minHeight: '100vh', background: '#050508', color: '#f0f0f8',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      padding: '72px 24px 64px', boxSizing: 'border-box',
+      padding: isMobile ? '40px 16px 40px' : '72px 24px 64px', boxSizing: 'border-box',
     }}>
       {isPerfect && <Confetti />}
 
@@ -173,10 +175,10 @@ export default function SolutionPanel({
         </div>
 
         <div style={{ fontSize: 13, color: '#34d399', fontWeight: 600, marginBottom: 10 }}>{kicker}</div>
-        <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 8 }}>{levelTitle}</h1>
-        <div style={{ color: '#6a6a7e', fontSize: 15, marginBottom: 36 }}>{subtitle}</div>
+        <h1 style={{ fontSize: isMobile ? 26 : 32, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 8 }}>{levelTitle}</h1>
+        <div style={{ color: '#6a6a7e', fontSize: 15, marginBottom: isMobile ? 28 : 36 }}>{subtitle}</div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, justifyContent: 'center', marginBottom: 56 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: isMobile ? 12 : 20, justifyContent: 'center', marginBottom: isMobile ? 36 : 56 }}>
           <Button variant="primary" onClick={onNext}>
             {hasNextLevel ? (
               <>Next level <span aria-hidden="true">→</span></>
@@ -223,8 +225,8 @@ export default function SolutionPanel({
                 transition={{ duration: 0.25 }}
                 style={{ overflow: 'hidden' }}
               >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-                  <div style={{ padding: '18px 20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
+                  <div style={{ padding: '18px 20px', ...(isMobile ? { minWidth: 0, overflowX: 'auto' } : {}) }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#8a8a9c' }}>Your CSS</span>
                       <CopyButton text={userCSS} />
@@ -233,7 +235,12 @@ export default function SolutionPanel({
                       {diff.left.map((l, i) => <CodeLine key={i} line={l} />)}
                     </div>
                   </div>
-                  <div style={{ padding: '18px 20px', borderLeft: '1px solid #1e1e2c' }}>
+                  <div style={{
+                    padding: '18px 20px',
+                    ...(isMobile
+                      ? { borderTop: '1px solid #1e1e2c', minWidth: 0, overflowX: 'auto' }
+                      : { borderLeft: '1px solid #1e1e2c' }),
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: '#8a8a9c' }}>Target CSS</span>
                       <CopyButton text={targetCSS} />
