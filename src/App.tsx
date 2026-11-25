@@ -10,6 +10,7 @@ import Button from './components/Button'
 import { BUTTON_BASE, BUTTON_VARIANTS, PRIMARY_STYLE, SECONDARY_STYLE } from './components/buttonStyles'
 import { LEVELS } from './data/levels'
 import { isLevelCompleted, getPersonalBest, clearAllProgress } from './lib/storage'
+import { useIsMobile } from './hooks/useViewport'
 import type { GameAction } from './types'
 
 const fade = {
@@ -29,6 +30,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 export default function App() {
   const [state, dispatch] = useGameReducer()
+  const isMobile = useIsMobile()
   const currentLevel = LEVELS.find(l => l.id === state.currentLevelId)
   const animatedFailScore = useScoreAnimation(state.score, 700)
   // bumped after a progress reset so the stats and grid re-read storage
@@ -126,16 +128,18 @@ export default function App() {
 
           {state.screen === 'levelSelect' && (
             <motion.div key="levelSelect" {...fade}
-              style={{ minHeight: '100vh', padding: '40px 0', borderBottom: '4px dashed #1c1c2a', boxSizing: 'border-box' }}
+              style={{ minHeight: '100vh', padding: isMobile ? '16px 0' : '40px 0', borderBottom: '4px dashed #1c1c2a', boxSizing: 'border-box' }}
             >
-              <div style={{ maxWidth: 1040, margin: '0 auto', padding: '48px 40px', boxSizing: 'border-box' }}>
+              <div style={{ maxWidth: 1040, margin: '0 auto', padding: isMobile ? '24px 16px' : '48px 40px', boxSizing: 'border-box' }}>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
+                <div style={isMobile
+                  ? { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, marginBottom: 20 }
+                  : { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
                   <div>
                     <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 4, color: '#f0f0f8' }}>Choose a Level</h2>
                     <p style={{ color: '#6a6a7e', fontSize: 13 }}>{LEVELS.length} challenges · easy to hard</p>
                   </div>
-                  <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ display: 'flex', gap: 4, ...(isMobile ? { marginLeft: -14 } : {}) }}>
                     <button onClick={handleResetProgress}
                       style={{
                         color: '#6a6a7e', fontSize: 13, padding: '8px 14px', borderRadius: 8,
@@ -203,7 +207,7 @@ export default function App() {
                 </h2>
                 <p className="text-gray-400 mb-3">You reached</p>
                 <div className="text-6xl font-black text-rose-400 tabular-nums">{animatedFailScore}%</div>
-                <div className="flex flex-wrap gap-36 justify-center my-12">
+                <div className={`flex flex-wrap justify-center my-12 ${isMobile ? 'gap-4' : 'gap-36'}`}>
                   <Button variant="primary" onClick={() => dispatch({ type: 'RETRY_LEVEL' })}>
                     Try Again
                   </Button>
@@ -253,6 +257,7 @@ const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string }[] = [
 ]
 
 function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
+  const isMobile = useIsMobile()
   const [query, setQuery]         = useState('')
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('all')
 
@@ -265,8 +270,10 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
   return (
     <div>
       {/* .toolbar / .search / .pills — literal copy of redesign-mockup.html */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+      <div style={isMobile
+        ? { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }
+        : { display: 'flex', gap: 12, marginBottom: 28 }}>
+        <div style={{ position: 'relative', flex: 1, ...(isMobile ? {} : { maxWidth: 280 }) }}>
           <input
             type="text"
             value={query}
@@ -288,7 +295,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 6 }} role="group" aria-label="Filter by difficulty">
+        <div style={{ display: 'flex', gap: 6, ...(isMobile ? { overflowX: 'auto' } : {}) }} role="group" aria-label="Filter by difficulty">
           {DIFFICULTY_FILTERS.map(f => {
             const active = difficulty === f.value
             return (
@@ -297,8 +304,8 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
                 onClick={() => setDifficulty(f.value)}
                 aria-pressed={active}
                 style={{
-                  padding: '9px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                  fontFamily: 'inherit', cursor: 'pointer',
+                  padding: isMobile ? '10px 16px' : '9px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                  fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
                   background: active ? '#7c6af7' : '#12121c',
                   color: active ? '#ffffff' : '#6a6a7e',
                   border: `1px solid ${active ? '#7c6af7' : '#1e1e2c'}`,
@@ -317,7 +324,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
         </div>
       ) : (
         // .grid — literal copy: display:grid; grid-template-columns:repeat(4,1fr); gap:14px
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 14 }}>
           {filtered.map((level, i) => {
             const completed = isLevelCompleted(level.id)
             const best = getPersonalBest(level.id)
@@ -331,7 +338,7 @@ function LevelGrid({ dispatch }: { dispatch: React.Dispatch<GameAction> }) {
                 style={{
                   position: 'relative', overflow: 'hidden', textAlign: 'left',
                   background: '#12121c', border: '1px solid #1e1e2c', borderRadius: 14,
-                  padding: 18, cursor: 'pointer', fontFamily: 'inherit',
+                  padding: isMobile ? 14 : 18, cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
                 {/* .card::before left accent bar */}
