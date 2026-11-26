@@ -1,7 +1,7 @@
 export interface Level {
   id:          number
   title:       string
-  difficulty:  'easy' | 'medium' | 'hard'
+  difficulty:  'easy' | 'medium' | 'hard' | 'expert'
   description: string
   html:        string
   targetCSS:   string
